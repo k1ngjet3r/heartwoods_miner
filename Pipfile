@@ -5,6 +5,8 @@ name = "pypi"
 
 [packages]
 pygetwindow = "*"
+pyautogui = "*"
+opencv-python = "*"
 
 [dev-packages]
 
