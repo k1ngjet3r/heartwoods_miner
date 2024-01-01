@@ -23,13 +23,13 @@ def movement_calibration(direction):
     p1 = _rock_coordinate()
 
     if direction == "up":
-        CTRL.move_vertical(-1, debug=True)
+        CTRL._move_vertical(-1, debug=True)
     elif direction == "down":
-        CTRL.move_vertical(1, debug=True)
+        CTRL._move_vertical(1, debug=True)
     elif direction == "right":
-        CTRL.move_horizonal(1, debug=True)
+        CTRL._move_horizonal(1, debug=True)
     elif direction == "left":
-        CTRL.move_horizonal(-1, debug=True)
+        CTRL._move_horizonal(-1, debug=True)
     else:
         logging.error("Invalid direction!")
     time.sleep(2)
