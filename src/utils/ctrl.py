@@ -2,7 +2,7 @@ import time
 import logging
 import pyautogui
 
-from utils.utils import load_mvmt_params
+from utils.utils import load_mvmt_params, Coordinate
 
 LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -16,8 +16,8 @@ class Character_Ctrl:
         time.sleep(duration)
         pyautogui.keyUp(key)
 
-    def click_window(self, coordinates):
-        pyautogui.click(coordinates[0], coordinates[1])
+    def click_window(self, p:Coordinate):
+        pyautogui.click(p.x, p.y)
 
     def _move_horizonal(self, x, debug=False):
         if x != 0:
@@ -53,13 +53,13 @@ class Character_Ctrl:
     def go_to_town(self):
         pyautogui.press("t")
 
-    def mine(self, coordinates:tuple):
+    def mine(self, p:Coordinate):
         LOGGER.debug("Mining...")
-        pyautogui.click(coordinates[0], coordinates[1])
+        pyautogui.click(p.x, p.y)
 
-    def move_to(self, vector:tuple):
-        self._move_vertical(vector[1])
-        self._move_horizonal(vector[0])
+    def move_to(self, p:Coordinate):
+        self._move_vertical(p.y)
+        self._move_horizonal(p.x)
 
 
 if __name__ == "__main__":
