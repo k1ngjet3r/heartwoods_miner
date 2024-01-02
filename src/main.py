@@ -7,7 +7,7 @@ from pprint import pprint
 from utils.recon import matching, load_templete
 from utils.ctrl import Character_Ctrl
 from utils.screenshot import ScreenGrabber
-from utils.utils import load_mvmt_params
+from utils.utils import load_mvmt_params, load_dimension_params
 
 LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -20,12 +20,25 @@ CENTER_OFFSET = (0, 20)
 BENCHMARK_ROCK = r"C:\Users\Jeter\dev\heartwoods_miner\images\coal\coal_3.png"
 TEMPLETE = load_templete(r"images\coal")
 
-
 def calculate_vector(p1: tuple, p2: tuple) -> tuple[float]:
     delta_x = p2[0] - p1[0]
     delta_y = p2[1] - p1[1]
     return (delta_x, delta_y)
 
+class Miner:
+    delta = (0, 0)
+    def __init__(self):
+        time.sleep(2)
+        _, center, top_left_corner = ScreenGrabber()
+        self.center = center
+        CTRL.click_window(top_left_corner)
+
+    def start_mining(self):
+        while True:
+            pass
+
+    def _displacement(self, vecter_1, vecter_2):
+        return (vecter_1[0]+ vecter_2[0], vecter_1[1]+vecter_2[1])
 
 if __name__ == "__main__":
     # boundry = (500, 500)
@@ -56,5 +69,3 @@ if __name__ == "__main__":
     #         logging.debug("No coal was found")
     #         time.sleep(1)
     # CTRL.mine(center[0], center[1])
-
-    print(load_mvmt_params())
