@@ -4,9 +4,10 @@ import logging
 
 from pprint import pprint
 
-from src.utils.recon import matching
-from src.utils.ctrl import Character_Ctrl
-from src.utils.screenshot import ScreenGrabber
+from utils.recon import matching
+from utils.ctrl import Character_Ctrl
+from utils.screenshot import ScreenGrabber
+from utils.utils import Coordinate
 
 BENCHMARK_ROCK = r"C:\Users\Jeter\dev\heartwoods_miner\images\benchmarks\river_rock.png"
 

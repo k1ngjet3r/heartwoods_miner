@@ -5,7 +5,9 @@ import logging
 import numpy as np
 
 from glob import glob
+from pathlib import Path
 
+from utils.utils import Coordinate
 from utils.screenshot import ScreenGrabber
 
 LOGGER = logging.getLogger(__name__)
@@ -18,7 +20,7 @@ def load_templete(path) -> list[str]:
 
 
 def matching(screenshot, templetes: list[str], threshold=0.8):
-    rlt: list[tuple] = []
+    rlt: dict = dict.fromkeys(templetes)
     img_rgb = cv2.imread(screenshot)
     img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
 
@@ -31,7 +33,7 @@ def matching(screenshot, templetes: list[str], threshold=0.8):
         possible_coordinate = [
             (int(c[0] + w / 2), int(c[1] + h / 2)) \
                                                 for c in zip(*loc[::-1])]
-        _append_only_diff_coordinates(possible_coordinate, rlt)
+        _append_only_diff_coordinates(t, possible_coordinate, rlt)
 
     LOGGER.info(f'Possible Location for {screenshot.split("/")[-1]}: {rlt}')
 
@@ -42,19 +44,31 @@ def matching(screenshot, templetes: list[str], threshold=0.8):
     cv2.imwrite(screenshot, img_rgb)
     return rlt
 
-def _append_only_diff_coordinates(incomming_coor, rlt_coor):
+def _append_only_diff_coordinates(templete, incomming_coor, rlt_coor):
     for c in incomming_coor:
-        if len(rlt_coor) == 0:
-            rlt_coor.append(c)
+        if not rlt_coor.get(templete, None):
+            rlt_coor[templete] = [c]
         else:
-            for r in rlt_coor:
-                if calculate_distance(c, r) < 5:
+            for r in rlt_coor[templete]:
+                if _calculate_distance(c, r) < 5:
                     break
             else:
-                rlt_coor.append(c)
+                rlt_coor[templete].append(c)
 
-def calculate_distance(x: list[int], y: list[int]) -> float:
+def _calculate_distance(x: list[int], y: list[int]) -> float:
     return math.sqrt((x[0] - y[0]) ** 2 + (x[1] - y[1]) ** 2)
+
+def search_for_coal(screenshot, threshold=0.8):
+    templetes = load_templete(Path('images/coal'))
+    possible_location = matching(screenshot, templetes, threshold)
+    locations = []
+    for key, value in possible_location.items():
+        for coor in value:
+            locations.append({
+                'coordinate': coor,
+                'type': key
+            })
+    return locations
 
 if __name__ == "__main__":
     # matching(
