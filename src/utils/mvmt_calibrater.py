@@ -4,7 +4,7 @@ import logging
 
 from pprint import pprint
 
-from utils.recon import matching
+from utils.recon import searching
 from utils.ctrl import Character_Ctrl
 from utils.screenshot import ScreenGrabber
 from utils.utils import Coordinate
@@ -19,7 +19,7 @@ CTRL = Character_Ctrl()
 def movement_calibration(direction):
     def _rock_coordinate():
         screenshot_1, _, _ = ScreenGrabber()
-        return matching(screenshot_1, [BENCHMARK_ROCK])[0]
+        return searching(screenshot_1, [BENCHMARK_ROCK])[0]
 
     p1 = _rock_coordinate()
 
