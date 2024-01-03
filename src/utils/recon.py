@@ -8,79 +8,88 @@ from glob import glob
 from pathlib import Path
 
 from utils.utils import Coordinate
-from utils.screenshot import ScreenGrabber
 
 LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
-TEMPLETE = r"images\coal"
 
+def load_items(path) -> list[str]:
+    return [f for f in glob(path)]
 
-def load_templete(path) -> list[str]:
-    return [f for f in glob(path + r"\*.png")]
+class Searching:
+    def __init__(self, screenshot:str, match_rate=0.8) -> None:
+        self.screenshot = screenshot
+        self.img_rgb = cv2.imread(screenshot)
+        self.img_gray = cv2.cvtColor(self.img_rgb, cv2.COLOR_BGR2GRAY)
+        self.match_rate = match_rate
 
+    def find_one_item(self, item:str) -> list[Coordinate]:
+        """ find item in the screen
 
-def matching(screenshot, templetes: list[str], threshold=0.8):
-    rlt: dict = dict.fromkeys(templetes)
-    img_rgb = cv2.imread(screenshot)
-    img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
+        Args:
+            item (str): path to the image to find in the screenshot
+        
+        Return:
+            list: list containing possible coordinates
+        """
+        if not os.path.exists(item):
+            raise FileNotFoundError(f'Cannot find the item under: {item}')
 
-    for t in templetes:
-        LOGGER.debug(f"Seraching templete: {t}")
-        pattern = cv2.imread(t, 0)
+        possible_coordinate = []
+        item_name = item.split('/')[-1].replace('.png', '')
+        pattern = cv2.imread(item, 0)
         w, h = pattern.shape[::-1]
-        res = cv2.matchTemplate(img_gray, pattern, cv2.TM_CCOEFF_NORMED)
-        loc = np.where(res >= threshold)
-        possible_coordinate = [
-            (int(c[0] + w / 2), int(c[1] + h / 2)) \
-                                                for c in zip(*loc[::-1])]
-        _append_only_diff_coordinates(t, possible_coordinate, rlt)
+        match_res = cv2.matchTemplate(
+                                self.img_gray, pattern, cv2.TM_CCOEFF_NORMED)
+        loc = np.where(match_res >= self.match_rate)
+        for p in zip(*loc[::-1]):
+            coordinate = Coordinate(
+                                x = int(p[0] + w / 2), 
+                                y = int(p[1] + h / 2),
+                                _type = item_name
+                            )
+            Coordinate.append_if_not_close(coordinate, possible_coordinate)
 
-    LOGGER.info(f'Possible Location for {screenshot.split("/")[-1]}: {rlt}')
+        return possible_coordinate
 
-    for pt in rlt:
-        cv2.circle(
-            img=img_rgb, center=pt, radius=5, color=(0, 0, 255), thickness=-1)
+    def find_multiple_items(self, items:list[str]) -> list[Coordinate]:
+        possible_coordinate = []
+        for item in items:
+            if len(search_rlt := self.find_one_item(item)) != 0:
+                possible_coordinate += search_rlt
 
-    cv2.imwrite(screenshot, img_rgb)
-    return rlt
+        return possible_coordinate
 
-def _append_only_diff_coordinates(templete, incomming_coor, rlt_coor):
-    for c in incomming_coor:
-        if not rlt_coor.get(templete, None):
-            rlt_coor[templete] = [c]
-        else:
-            for r in rlt_coor[templete]:
-                if _calculate_distance(c, r) < 5:
-                    break
-            else:
-                rlt_coor[templete].append(c)
+    def mark_item_on_screenshot(self, possible_coordinate, name=None):
+        if len(possible_coordinate) == 0:
+            LOGGER.error('Possible coordinate passed into the method is empty')
+        for coor in possible_coordinate:
+            cv2.circle(
+                        img=self.img_rgb, center=(coor.x, coor.y), 
+                        radius=5, color=(0, 0, 255), thickness=-1)
+        if not name:
+            name = self.screenshot.replace('.png', '_rlt.png')
+        
+        cv2.imwrite(name, self.img_rgb)
 
-def _calculate_distance(x: list[int], y: list[int]) -> float:
-    return math.sqrt((x[0] - y[0]) ** 2 + (x[1] - y[1]) ** 2)
+def search_for_coal(screenshot, threshold=0.8, show=False):
+    coal_images_path = Path('../images/coal/*.png')
+    items = load_items(str(coal_images_path))
+    LOGGER.info(f'images: {items}')
+    s = Searching(screenshot, match_rate=threshold)
+    possible_location = s.find_multiple_items(items)
+    if show:
+        s.mark_item_on_screenshot(possible_location)
 
-def search_for_coal(screenshot, threshold=0.8):
-    templetes = load_templete(Path('images/coal'))
-    possible_location = matching(screenshot, templetes, threshold)
-    locations = []
-    for key, value in possible_location.items():
-        for coor in value:
-            locations.append({
-                'coordinate': coor,
-                'type': key
-            })
-    return locations
+    return possible_location
 
 if __name__ == "__main__":
-    # matching(
-    #     screenshot=r'images\benchmarks\benchmark_1.png',
-    #     templete=r'images/coal/coal_2.png'
-    # )
-    screenshot, center, _ = ScreenGrabber()
-    coal_location = matching(screenshot, load_templete(TEMPLETE))
-    relative_location = [
-        (center[0] - coal[0], center[1] - coal[1]) for coal in coal_location
-    ]
+    rlt = search_for_coal(
+        screenshot='/Users/jeterlin/Dev/github/heartwoods_miner/images/benchmarks/benchmark_1.png',
+        show=True
+    )
 
-    print(f"Relative location: {relative_location}")
+    print(f"Possible ore locations:")
+    for r in rlt:
+        print(str(r))
 
     # print(b)
