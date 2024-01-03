@@ -27,7 +27,7 @@ class Searching:
 
         Args:
             item (str): path to the image to find in the screenshot
-        
+
         Return:
             list: list containing possible coordinates
         """
@@ -43,7 +43,7 @@ class Searching:
         loc = np.where(match_res >= self.match_rate)
         for p in zip(*loc[::-1]):
             coordinate = Coordinate(
-                                x = int(p[0] + w / 2), 
+                                x = int(p[0] + w / 2),
                                 y = int(p[1] + h / 2),
                                 _type = item_name
                             )
@@ -64,11 +64,11 @@ class Searching:
             LOGGER.error('Possible coordinate passed into the method is empty')
         for coor in possible_coordinate:
             cv2.circle(
-                        img=self.img_rgb, center=(coor.x, coor.y), 
+                        img=self.img_rgb, center=(coor.x, coor.y),
                         radius=5, color=(0, 0, 255), thickness=-1)
         if not name:
             name = self.screenshot.replace('.png', '_rlt.png')
-        
+
         cv2.imwrite(name, self.img_rgb)
 
 def search_for_coal(screenshot, threshold=0.8, show=False):
@@ -84,7 +84,7 @@ def search_for_coal(screenshot, threshold=0.8, show=False):
 
 if __name__ == "__main__":
     rlt = search_for_coal(
-        screenshot='/Users/jeterlin/Dev/github/heartwoods_miner/images/benchmarks/benchmark_1.png',
+        screenshot=r'C:\Users\Jeter\dev\heartwoods_miner\images\screenshot.png',
         show=True
     )
 

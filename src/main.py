@@ -19,36 +19,45 @@ CENTER_OFFSET = (0, 20)
 # BENCHMARK_ROCK = r"C:\Users\Jeter\dev\heartwoods_miner\images\benchmarks\river_rock.png"
 
 ITEM_DIMENSION = load_dimension_params()
-CHARACTER_OFFSET = Coordinate(int(ITEM_DIMENSION.get('character')[0] / 2), 0)
+CHARACTER_OFFSET = Coordinate(int(ITEM_DIMENSION.get("character")[0] / 2), 0)
 
 BENCHMARK_ROCK = r"C:\Users\Jeter\dev\heartwoods_miner\images\coal\coal_3.png"
 TEMPLETE = load_items(r"images\coal")
 
+
 class Miner:
     current_position = Coordinate(x=0, y=0)
+
     def __init__(self):
         time.sleep(2)
         window = ScreenGrabber()
         self.center = window.center
         CTRL.click_window(window.top_left_corner)
 
-    def start_mining_coal(self, ore_root:str):
+    def start_mining_coal(self, ore_root: str):
         """
         Args:
             ore_root (list): path to ore images
         """
         ore_list = load_items(ore_root)
+        if len(ore_list) == 0:
+            LOGGER.info(f"Cannot find any coal image from following folder: {ore_root}")
+            sys.exit()
         while True:
             current_window = ScreenGrabber()
             search_rlt = Searching(screenshot=current_window.name)
             possible_ore = search_rlt.find_multiple_items(items=ore_list)
             if len(possible_ore) > 0:
-                LOGGER.info(f'possible ore location: {[(coor.x, coor.y) 
-                                                    for coor in possible_ore]}')
-                closest_ore = Coordinate.find_closest_coordinate(possible_ore)
-                ore_offset = Coordinate(int(ITEM_DIMENSION.get('coal_big'))/2, 0) \
-                    if closest_ore._type == 'coal_big' \
-                        else Coordinate(int(ITEM_DIMENSION.get('coal_small'))/2, 0)
+                LOGGER.info(
+                    f"possible ore location: {[(coor.x, coor.y) for coor in possible_ore]}"
+                )
+                closest_ore = Coordinate.find_closest_coordinate(
+                                                    possible_ore, self.center)
+                ore_offset = (
+                    Coordinate(int(ITEM_DIMENSION.get("coal_big")) / 2, 0)
+                    if closest_ore._type == "coal_big"
+                    else Coordinate(int(ITEM_DIMENSION.get("coal_small")) / 2, 0)
+                )
                 location_offset = CHARACTER_OFFSET + ore_offset
                 vecter = closest_ore - self.center
                 if vecter.x > 0:
@@ -58,25 +67,27 @@ class Miner:
                     vecter += location_offset
                     click_position = self.center - ore_offset
 
-                LOGGER.debug(f'Move to {vecter}...')
+                LOGGER.debug(f"Move to {vecter}...")
                 CTRL.move_to(vecter)
                 self.current_position += vecter
                 CTRL.mine(click_position)
 
             else:
-                LOGGER.debug('No coal was found')
-                if self.current_position == Coordinate(0, 0):
+                LOGGER.debug("No coal was found")
+                if self.current_position.x == 0 and self.current_position.y == 0:
                     LOGGER.debug(
-                        'Current location is at origin, wait for coal respawn...')
+                        "Current location is at origin, wait for coal respawn..."
+                    )
                     time.sleep(5)
                 else:
                     LOGGER.debug(
-                        'Current location is not at original, moving character back to origin'
+                        "Current location is not at original, moving character back to origin"
                     )
-                    CTRL.move_to(-vecter)
+                    CTRL.move_to(-self.current_position)
+
 
 if __name__ == "__main__":
-    coal_root = str(Path('images/coal'))
+    coal_root = str(Path("../images/coal/*.png"))
     Miner().start_mining_coal(coal_root)
     # boundry = (500, 500)
     # time.sleep(2)
