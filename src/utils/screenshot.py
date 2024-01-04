@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 from PIL import Image
 
-from utils.utils import Coordinate
+from utils.utils import Coordinate, Boundary
 
 LOGGER = logging.getLogger(__name__)
 # logging.basicConfig(level=logging.DEBUG)
@@ -27,6 +27,7 @@ class Screenshot:
     name: str
     center:  Coordinate
     top_left_corner: Coordinate
+    boundary: Boundary
 
 def ScreenGrabber(new_file=False):
     if new_file:
@@ -50,7 +51,8 @@ def ScreenGrabber(new_file=False):
     im.save(image_name)
     center = Coordinate((left + right) / 2, (top + bottom) / 2)
     window_top_left_corner = Coordinate(left + 10, top + 10)
-    return Screenshot(image_name, center, window_top_left_corner)
+    boundary = Boundary(0, 0, right, bottom)
+    return Screenshot(image_name, center, window_top_left_corner, boundary)
 
 if __name__ == "__main__":
     ScreenGrabber()
