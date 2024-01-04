@@ -14,25 +14,24 @@ LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 CTRL = Character_Ctrl()
-PACE = 390
-CENTER_OFFSET = (0, 20)
-# BENCHMARK_ROCK = r"C:\Users\Jeter\dev\heartwoods_miner\images\benchmarks\river_rock.png"
 
 ITEM_DIMENSION = load_dimension_params()
 CHARACTER_OFFSET = Coordinate(int(ITEM_DIMENSION.get("character")[0] / 2), 0)
 
-BENCHMARK_ROCK = r"C:\Users\Jeter\dev\heartwoods_miner\images\coal\coal_3.png"
-TEMPLETE = load_items(r"images\coal")
-
-
 class Miner:
-    current_position = Coordinate(x=0, y=0)
-
     def __init__(self):
         time.sleep(2)
         window = ScreenGrabber()
         self.center = window.center
+        self.position = window.center
+        self.boundary = window.boundary
         CTRL.click_window(window.top_left_corner)
+
+    def _calculate_coal_offset(_type):
+        if _type == 'coal_big':
+            return Coordinate(int(ITEM_DIMENSION.get("coal_big")) / 2, 0)
+        else:
+            return Coordinate(int(ITEM_DIMENSION.get("coal_small")) / 2, 0)
 
     def start_mining_coal(self, ore_root: str):
         """
@@ -51,26 +50,28 @@ class Miner:
                 LOGGER.info(
                     f"possible ore location: {[(coor.x, coor.y) for coor in possible_ore]}"
                 )
-                closest_ore = Coordinate.find_closest_coordinate(
-                                                    possible_ore, self.center)
-                ore_offset = (
-                    Coordinate(int(ITEM_DIMENSION.get("coal_big")) / 2, 0)
-                    if closest_ore._type == "coal_big"
-                    else Coordinate(int(ITEM_DIMENSION.get("coal_small")) / 2, 0)
-                )
-                location_offset = CHARACTER_OFFSET + ore_offset
-                vecter = closest_ore - self.center
-                if vecter.x > 0:
-                    vecter -= location_offset
-                    click_position = self.center + ore_offset
-                else:
-                    vecter += location_offset
-                    click_position = self.center - ore_offset
+                move_vecter = Coordinate.valid_move(
+                    possible_ore, self.position, self.center, self.boundary)
 
-                LOGGER.debug(f"Move to {vecter}...")
-                CTRL.move_to(vecter)
-                self.current_position += vecter
-                CTRL.mine(click_position)
+                if move_vecter:
+                    coal_offset = self._calculate_coal_offset(
+                                                    _type= move_vecter._type)
+                    location_offset = CHARACTER_OFFSET + coal_offset
+
+                    if move_vecter.x > 0:
+                        move_vecter -= location_offset
+                        click_position = self.center + coal_offset
+                    else:
+                        move_vecter += location_offset
+                        click_position = self.center - coal_offset
+
+                    LOGGER.debug(f"Move to {move_vecter}...")
+                    CTRL.move_to(move_vecter)
+                    self.position += move_vecter
+                    CTRL.mine(click_position)
+                else:
+                    LOGGER.debug('No availible coal was in the boundary')
+                    CTRL.move_to(-self.current_position)
 
             else:
                 LOGGER.debug("No coal was found")
@@ -84,6 +85,20 @@ class Miner:
                         "Current location is not at original, moving character back to origin"
                     )
                     CTRL.move_to(-self.current_position)
+
+    def calibrate_origin(self):
+        ref_coordinate = Coordinate(516, 136)
+        ref_path = Path('../images/benchmarks/origin_ref.png')
+        window = ScreenGrabber()
+        
+        search = Searching(screenshot=window.name)
+        ref_found = search.find_one_item(ref_path)
+        if len(ref_found) == 0:
+            LOGGER.error('cannot find the reference rock during the origin calibration')
+        else:
+            ref_found_coord = ref_found[0]
+            vecter = ref_found_coord - ref_coordinate
+            CTRL.move_to(vecter)
 
 
 if __name__ == "__main__":
