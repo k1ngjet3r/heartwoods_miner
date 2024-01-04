@@ -1,7 +1,10 @@
 import math
 import yaml
-
+import logging
 from pathlib import Path
+
+LOGGER = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
 class Coordinate:
     def __init__(self, x, y, _type=None):
@@ -50,6 +53,26 @@ class Coordinate:
         distances = [center.distance_to(coor) for coor in coordinates_list]
         return min(distances)
 
+    @staticmethod
+    def sort_coordinates_by_distance(coordinates_list, center):
+        return sorted(coordinates_list, key=lambda coord: center.distance_to(coord))
+
+    @staticmethod
+    def valid_move(coordinates_list, position, center, absolute_boundary):
+        sorted_coordinate_list = sorted(coordinates_list, \
+                                key=lambda coord: position.distance_to(coord))
+        LOGGER.debug(f'sorted list: {[str(c) for c in sorted_coordinate_list]}')
+        for coord in sorted_coordinate_list:
+            vecter = coord - center
+            absolute_coord = position + vecter
+            LOGGER.debug(f'Coordinate: {coord}, vecter: {str(vecter)}, absolute coor: {absolute_coord}')
+            if absolute_boundary.is_within_boundary(absolute_coord):
+                LOGGER.debug(f'{coord} is the closest and within boundary')
+                vecter._type = coord._type
+                return vecter
+        else:
+            LOGGER.debug('No valid move available')
+
 class Boundary(Coordinate):
     def __init__(self, x_min, y_min, x_max, y_max):
         super().__init__(x_max, y_max)
@@ -73,8 +96,39 @@ def load_dimension_params() -> list[tuple]:
 
 if __name__ == '__main__':
     rlt = []
-    c1 = Coordinate(12, 30)
-    c2 = Coordinate(10, 50)
-    c3 = Coordinate(9, 30)
-    c4 = -c1
-    print(c4.x, c4.y)
+    current = Coordinate(2, 2)
+    center = Coordinate(2, 2)
+    c1 = Coordinate(4, 0, _type='a')
+
+    absolute_boundary = Boundary(
+        x_max=5,
+        x_min=0,
+        y_max=5,
+        y_min=0
+    )
+    l = [c1]
+    v = Coordinate.valid_move(
+        coordinates_list=l,
+        position=current,
+        center=center,
+        absolute_boundary=absolute_boundary
+    )
+    print('valid move', str(v))
+
+    current += v
+    print('position after move', str(current))
+
+    c2 = Coordinate(3, 1)
+    l2 = [c2]
+    v2 = Coordinate.valid_move(
+        coordinates_list=l,
+        position=current,
+        center=center,
+        absolute_boundary=absolute_boundary
+    )
+    print('valid move', str(v2))
+    # c4 = c2-c1
+    # c4._type = 'd'
+    # print(c4.x)
+    # print(c4.y)
+    # print(c4._type)
