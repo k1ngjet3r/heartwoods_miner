@@ -4,6 +4,7 @@ import logging
 
 from pprint import pprint
 from pathlib import Path
+from PIL import Image
 
 from utils.recon import load_items, Searching
 from utils.ctrl import Character_Ctrl
@@ -18,12 +19,15 @@ CTRL = Character_Ctrl()
 ITEM_DIMENSION = load_dimension_params()
 CHARACTER_OFFSET = Coordinate(int(ITEM_DIMENSION.get("character")[0] / 2), 0)
 
+REF_IMG_PATH = str(Path('../images/benchmarks/origin_ref.png'))
+
 class Miner:
     def __init__(self):
         time.sleep(2)
         window = ScreenGrabber()
-        self.center = window.center
-        self.position = window.center
+        self.ref_coord = None
+        self.center = window.absolute_center
+        self.position = window.relative_center
         self.boundary = window.boundary
         CTRL.click_window(window.top_left_corner)
 
@@ -39,9 +43,15 @@ class Miner:
             ore_root (list): path to ore images
         """
         ore_list = load_items(ore_root)
+        self.setting_reference_point()
+
+        if not self.ref_coord:
+            sys.exit()
+
         if len(ore_list) == 0:
             LOGGER.info(f"Cannot find any coal image from following folder: {ore_root}")
             sys.exit()
+
         while True:
             current_window = ScreenGrabber()
             search_rlt = Searching(screenshot=current_window.name)
@@ -87,48 +97,84 @@ class Miner:
                     CTRL.move_to(-self.current_position)
 
     def calibrate_origin(self):
-        ref_coordinate = Coordinate(516, 136)
-        ref_path = Path('../images/benchmarks/origin_ref.png')
         window = ScreenGrabber()
-        
         search = Searching(screenshot=window.name)
-        ref_found = search.find_one_item(ref_path)
+        ref_found = search.find_one_item(REF_IMG_PATH)
         if len(ref_found) == 0:
             LOGGER.error('cannot find the reference rock during the origin calibration')
         else:
             ref_found_coord = ref_found[0]
-            vector = ref_found_coord - ref_coordinate
+            vector =  self.ref_coord - ref_found_coord
             CTRL.move_to(vector)
+            self.position += vector
 
+    def setting_reference_point(self):
+        window = ScreenGrabber()
+        search = Searching(window.name)
+        ref_coord = search.find_one_item(REF_IMG_PATH)
+        if ref_coord and len(ref_coord) > 0:
+            self.ref_coord = ref_coord
+        else:
+            LOGGER.error('Cannot find the reference, please relocate the character!')
+
+    def check_inventory(self):
+        """ open inventory and check if the inventory is full
+
+        Return:
+            bool: return True if inventory is full
+        """        
+        raise NotImplementedError()
+        CTRL.inventory()
+
+    def deposite_item_to_bank(self):
+        """ 1. Teleport back to town
+            2. go to bank
+            3. deposite the item
+        """
+        raise NotImplementedError()
+
+    def go_to_bank_from_teleport(self):
+        """ 1. teleport back to town
+            2. go to bank
+        """
+        raise NotImplementedError()
+        CTRL.go_to_town
+    
+    def go_to_coal_spot_from_bank():
+        raise NotImplementedError()
+
+    def go_to_coal_spot_from_teleport():
+        raise NotImplementedError()
+        CTRL.go_to_town
 
 if __name__ == "__main__":
-    coal_root = str(Path("../images/coal/*.png"))
-    Miner().start_mining_coal(coal_root)
-    # boundry = (500, 500)
-    # time.sleep(2)
-    # _, center, top_left_corner = ScreenGrabber()
-    # CTRL.click_window(top_left_corner[0], top_left_corner[1])
-    # current_position = (center[0] + CENTER_OFFSET[0], center[1] + CENTER_OFFSET[1])
+    # coal_root = str(Path("../images/coal/*.png"))
+    # Miner().start_mining_coal(coal_root)
 
-    # while True:
-    #     try:
-    #         screenshot_1, _, _ = ScreenGrabber()
-    #         target_position = matching(screenshot_1, TEMPLETE)[0]
+    ref_coordinate = Coordinate(516, 105)
+    ref_path = Path('../images/benchmarks/origin_ref.png')
 
-    #         vector = calculate_vector(current_position, target_position)
-    #         print(f"distance from character: {vector}")
-    #         CTRL.move_to(vector)
+    img_name = '/Users/jeterlin/Dev/github/heartwoods_miner/images/benchmarks/benchmark_3.png'
+    test_img_name = '/Users/jeterlin/Dev/github/heartwoods_miner/images/test.png'
+    
+    img = Image.open(img_name)
+    w, h = img.size
+    _center = Coordinate(int(w/2), int(h/2))
+    search = Searching(screenshot=img_name)
+    ref_found = search.find_one_item(str(ref_path))
+    print(f'screenshot dimension: {(w, h)}')
+    print(f'center: {_center}')
+    print(f'center type: {type(_center)}')
+    print(f'ref coord: {ref_found}')
+    print(f'ref type: {type(ref_found)}')
+    print(f'delta: {str(ref_found[0]-_center)}')
 
-    #         if vector[0] > 0:
-    #             click_coordinate = (center[0] + 50, center[1])
-    #         else:
-    #             click_coordinate = (center[0] - 50, center[1])
-    #         CTRL.mine(click_coordinate[0], click_coordinate[1])
-    #         time.sleep(8)
 
-    #         # return to center
-    #         CTRL.move_to((-vector[0], -vector[1]))
-    #     except IndexError:
-    #         logging.debug("No coal was found")
-    #         time.sleep(1)
-    # CTRL.mine(center[0], center[1])
+    ref_found.append(_center)
+    print(f'ref coord: {ref_found}')
+
+    search.mark_item_on_screenshot(ref_found)
+
+    
+
+    

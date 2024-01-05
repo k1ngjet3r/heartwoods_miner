@@ -8,6 +8,7 @@ from glob import glob
 from pathlib import Path
 
 from utils.utils import Coordinate
+from utils.screenshot import Screenshot
 
 LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -18,7 +19,7 @@ def load_items(path) -> list[str]:
 class Searching:
     def __init__(self, screenshot:str, match_rate=0.8) -> None:
         self.screenshot = screenshot
-        self.img_rgb = cv2.imread(screenshot)
+        self.img_rgb = cv2.imread(self.screenshot)
         self.img_gray = cv2.cvtColor(self.img_rgb, cv2.COLOR_BGR2GRAY)
         self.match_rate = match_rate
 
@@ -60,12 +61,16 @@ class Searching:
         return possible_coordinate
 
     def mark_item_on_screenshot(self, possible_coordinate, name=None):
-        if len(possible_coordinate) == 0:
+        if not possible_coordinate or len(possible_coordinate) == 0:
             LOGGER.error('Possible coordinate passed into the method is empty')
         for coor in possible_coordinate:
             cv2.circle(
-                        img=self.img_rgb, center=(coor.x, coor.y), 
-                        radius=5, color=(0, 0, 255), thickness=-1)
+                img=self.img_rgb, 
+                center=(coor.x, coor.y), 
+                radius=5, 
+                color=(0, 0, 255), 
+                thickness=-1
+            )
         if not name:
             name = self.screenshot.replace('.png', '_rlt.png')
         
@@ -86,7 +91,7 @@ if __name__ == "__main__":
     search = Searching(
         screenshot='/Users/jeterlin/Dev/github/heartwoods_miner/images/benchmarks/benchmark_3.png',
     )
-    center = Coordinate(698, 380)
+    center = Coordinate(648, 364)
     rlt = search.find_one_item('/Users/jeterlin/Dev/github/heartwoods_miner/images/benchmarks/origin_ref.png')
     search.mark_item_on_screenshot(rlt)
 
