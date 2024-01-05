@@ -63,13 +63,13 @@ class Coordinate:
                                 key=lambda coord: position.distance_to(coord))
         LOGGER.debug(f'sorted list: {[str(c) for c in sorted_coordinate_list]}')
         for coord in sorted_coordinate_list:
-            vecter = coord - center
-            absolute_coord = position + vecter
-            LOGGER.debug(f'Coordinate: {coord}, vecter: {str(vecter)}, absolute coor: {absolute_coord}')
+            vector = coord - center
+            absolute_coord = position + vector
+            LOGGER.debug(f'Coordinate: {coord}, vector: {str(vector)}, absolute coor: {absolute_coord}')
             if absolute_boundary.is_within_boundary(absolute_coord):
                 LOGGER.debug(f'{coord} is the closest and within boundary')
-                vecter._type = coord._type
-                return vecter
+                vector._type = coord._type
+                return vector
         else:
             LOGGER.debug('No valid move available')
 

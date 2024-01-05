@@ -50,24 +50,24 @@ class Miner:
                 LOGGER.info(
                     f"possible ore location: {[(coor.x, coor.y) for coor in possible_ore]}"
                 )
-                move_vecter = Coordinate.valid_move(
+                move_vector = Coordinate.valid_move(
                     possible_ore, self.position, self.center, self.boundary)
 
-                if move_vecter:
+                if move_vector:
                     coal_offset = self._calculate_coal_offset(
-                                                    _type= move_vecter._type)
+                                                    _type= move_vector._type)
                     location_offset = CHARACTER_OFFSET + coal_offset
 
-                    if move_vecter.x > 0:
-                        move_vecter -= location_offset
+                    if move_vector.x > 0:
+                        move_vector -= location_offset
                         click_position = self.center + coal_offset
                     else:
-                        move_vecter += location_offset
+                        move_vector += location_offset
                         click_position = self.center - coal_offset
 
-                    LOGGER.debug(f"Move to {move_vecter}...")
-                    CTRL.move_to(move_vecter)
-                    self.position += move_vecter
+                    LOGGER.debug(f"Move to {move_vector}...")
+                    CTRL.move_to(move_vector)
+                    self.position += move_vector
                     CTRL.mine(click_position)
                 else:
                     LOGGER.debug('No availible coal was in the boundary')
@@ -97,8 +97,8 @@ class Miner:
             LOGGER.error('cannot find the reference rock during the origin calibration')
         else:
             ref_found_coord = ref_found[0]
-            vecter = ref_found_coord - ref_coordinate
-            CTRL.move_to(vecter)
+            vector = ref_found_coord - ref_coordinate
+            CTRL.move_to(vector)
 
 
 if __name__ == "__main__":
