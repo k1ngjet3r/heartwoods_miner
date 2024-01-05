@@ -8,6 +8,7 @@ pygetwindow = "*"
 pyautogui = "*"
 opencv-python = "*"
 pyyaml = "*"
+pyobjc-core = "*"
 
 [dev-packages]
 
