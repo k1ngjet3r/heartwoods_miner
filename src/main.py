@@ -9,7 +9,7 @@ from PIL import Image
 
 from utils.recon import load_items, Searching
 from utils.ctrl import Character_Ctrl
-from utils.screenshot import ScreenGrabber
+from utils.screenshot import take_screenshot
 from utils.utils import Coordinate, load_dimension_params
 
 formatter = logging.Formatter(
@@ -42,7 +42,7 @@ REF_IMG_PATH = str(Path("../images/benchmarks/origin_ref.png"))
 class Miner:
     def __init__(self):
         time.sleep(2)
-        window = ScreenGrabber()
+        window = take_screenshot()
         self.ref_coord = None
         self.center = window.absolute_center
         self.position = window.relative_center
@@ -73,7 +73,7 @@ class Miner:
             sys.exit()
 
         while True:
-            current_window = ScreenGrabber()
+            current_window = take_screenshot()
             search_rlt = Searching(screenshot=current_window.name)
             possible_ore = search_rlt.find_multiple_items(items=ore_list)
             if len(possible_ore) > 0:
@@ -141,7 +141,7 @@ class Miner:
             raise NotImplementedError("origin calibration is not finish")
 
     def _get_ref_coordinate(self):
-        window = ScreenGrabber()
+        window = take_screenshot()
         search = Searching(window.name, match_rate=0.95)
         ref_coord = search.find_one_item(REF_IMG_PATH)
         if len(ref_coord) > 0:

@@ -6,7 +6,7 @@ from pprint import pprint
 
 from utils.recon import Searching
 from utils.ctrl import Character_Ctrl
-from utils.screenshot import ScreenGrabber
+from utils.screenshot import take_screenshot
 from utils.utils import Coordinate
 
 BENCHMARK_ROCK = r"C:\Users\Jeter\dev\heartwoods_miner\images\benchmarks\river_rock.png"
@@ -18,7 +18,7 @@ CTRL = Character_Ctrl()
 
 def movement_calibration(direction):
     def _rock_coordinate():
-        screenshot = ScreenGrabber()
+        screenshot = take_screenshot()
         return Searching(screenshot.name).find_one_item(BENCHMARK_ROCK)[0]
 
     p1 = _rock_coordinate()

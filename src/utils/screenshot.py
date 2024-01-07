@@ -19,15 +19,28 @@ IMAGE_ROOT = str(Path("../images"))
 TITLE_BAR_OFFSET = 31
 
 @dataclass
-class Screenshot:
-    name: str
-    relative_center: Coordinate
-    size: tuple
-    top_left_corner: Coordinate = None
-    boundary: Boundary = None
-    absolute_center: Coordinate = None
+class game_resolution:
+    x = 1280
+    y = 720
+    x_offset = 8
+    y_offset = 31
 
-def ScreenGrabber(new_file=False):
+@dataclass
+class Screenshot:
+    """ Storing the detail of a screen shot
+
+    Args:
+        filepath (str): name of the saved screenshot filepath
+        screen_center (Coordinate): the screen center of the game window (including the title bar)
+        character_coordinate (Coordinate): the center of the game screen (exclude the title bar)
+    
+    """    
+    filepath: str
+    window_center: Coordinate
+    character_center: Coordinate
+    top_left_coordinate: Coordinate = None
+
+def take_screenshot(new_file=False):
     if new_file:
         filename = datetime.now().strftime("%H_%M_%S") + ".png"
     else:
@@ -42,25 +55,32 @@ def ScreenGrabber(new_file=False):
         left, top = window.topleft
         right, bottom = window.bottomright
 
-    pyautogui.screenshot(image_name)
-    im = Image.open(image_name)
-    im = im.crop((left, top+TITLE_BAR_OFFSET, right, bottom))
-    # LOGGER.info(f"Screen Center: {left+10, top+10}")
-    im.save(image_name)
-    w, h = im.size
+        corrected_left = left + game_resolution.x_offset
+        corrected_top = top + game_resolution.y_offset
+        corrected_right = corrected_left + game_resolution.x
+        corrected_bottom = corrected_top + game_resolution.y
 
-    absolute_center = Coordinate((left + right) / 2, (top + TITLE_BAR_OFFSET + bottom) / 2)
-    relative_center = Coordinate(int(w/2), int(h/2))
-    window_top_left_corner = Coordinate(left + 10, top + 10)
-    boundary = Boundary(0, 0, right, bottom-TITLE_BAR_OFFSET)
-    return Screenshot(
-        name = image_name,
-        relative_center = relative_center,
-        size = (w, h),
-        top_left_corner = window_top_left_corner,
-        boundary=boundary,
-        absolute_center=absolute_center
-    )
+        pyautogui.screenshot(image_name)
+        im = Image.open(image_name)
+        im = im.crop((
+            corrected_left , corrected_top, corrected_right, corrected_bottom))
+        im.save(image_name)
+
+        window_center = Coordinate(
+            int((left + right) / 2), 
+            int((top + bottom) / 2)
+        )
+        character_center = Coordinate(
+            int(game_resolution.x_offset + game_resolution.x / 2 + left), 
+            int(game_resolution.y_offset + game_resolution.y / 2 + top)
+        )
+        top_left_coordinate = Coordinate(left + 10, top + 10)
+        return Screenshot(
+            image_name,
+            window_center,
+            character_center,
+            top_left_coordinate
+        )
 
 def get_screenshot_info(screenshot):
     im = Image.open(screenshot)
