@@ -82,21 +82,5 @@ def take_screenshot(new_file=False):
             top_left_coordinate
         )
 
-def get_screenshot_info(screenshot):
-    im = Image.open(screenshot)
-    size = im.size
-    return Screenshot(
-        name = screenshot,
-        relative_center = Coordinate(int(size[0]/2), int(size[1]/2)),
-        size = size,
-    )
-
-def trim_title_bar(screenshot):
-    im = Image.open(screenshot)
-    w, h = im.size
-    im = im.crop((0, TITLE_BAR_OFFSET, w, h))
-    im.save(screenshot)
-
-
 if __name__ == "__main__":
     take_screenshot()
