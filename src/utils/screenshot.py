@@ -33,8 +33,8 @@ class Screenshot:
         filepath (str): name of the saved screenshot filepath
         screen_center (Coordinate): the screen center of the game window (including the title bar)
         character_coordinate (Coordinate): the center of the game screen (exclude the title bar)
-    
-    """    
+
+    """
     filepath: str
     window_center: Coordinate
     character_center: Coordinate
@@ -67,11 +67,11 @@ def take_screenshot(new_file=False):
         im.save(image_name)
 
         window_center = Coordinate(
-            int((left + right) / 2), 
+            int((left + right) / 2),
             int((top + bottom) / 2)
         )
         character_center = Coordinate(
-            int(game_resolution.x_offset + game_resolution.x / 2 + left), 
+            int(game_resolution.x_offset + game_resolution.x / 2 + left),
             int(game_resolution.y_offset + game_resolution.y / 2 + top)
         )
         top_left_coordinate = Coordinate(left + 10, top + 10)
@@ -99,12 +99,4 @@ def trim_title_bar(screenshot):
 
 
 if __name__ == "__main__":
-    # ScreenGrabber()
-    img = '/Users/jeterlin/Dev/github/heartwoods_miner/images/benchmarks/benchmark_3.png'
-    trim_title_bar(img)
-    ss = get_screenshot_info(img)
-    print(f'name: {ss.name}')
-    print(f'relative_center: {ss.relative_center}')
-    print(f'size: {ss.size}')
-    # im = Image.open(image_name)
-    # im.show()
+    take_screenshot()
