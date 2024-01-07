@@ -54,11 +54,11 @@ def ScreenGrabber(new_file=False):
     window_top_left_corner = Coordinate(left + 10, top + 10)
     boundary = Boundary(0, 0, right, bottom-TITLE_BAR_OFFSET)
     return Screenshot(
-        name = image_name, 
-        relative_center = relative_center, 
+        name = image_name,
+        relative_center = relative_center,
         size = (w, h),
         top_left_corner = window_top_left_corner,
-        boundary=boundary, 
+        boundary=boundary,
         absolute_center=absolute_center
     )
 

@@ -4,7 +4,7 @@ import logging
 
 from pprint import pprint
 
-from utils.recon import searching
+from utils.recon import Searching
 from utils.ctrl import Character_Ctrl
 from utils.screenshot import ScreenGrabber
 from utils.utils import Coordinate
@@ -18,8 +18,8 @@ CTRL = Character_Ctrl()
 
 def movement_calibration(direction):
     def _rock_coordinate():
-        screenshot_1, _, _ = ScreenGrabber()
-        return searching(screenshot_1, [BENCHMARK_ROCK])[0]
+        screenshot = ScreenGrabber()
+        return Searching(screenshot.name).find_one_item(BENCHMARK_ROCK)[0]
 
     p1 = _rock_coordinate()
 
@@ -37,7 +37,7 @@ def movement_calibration(direction):
 
     p2 = _rock_coordinate()
 
-    delta = (p1[0] - p2[0], p1[1] - p2[1])
+    delta = p2 - p1
     return delta
 
 
@@ -45,16 +45,16 @@ if __name__ == "__main__":
     order = {"right": [], "up": [], "left": [], "down": []}
 
     ctrl = Character_Ctrl()
-    ctrl.click_window(7, 19)
+    ctrl.click_window(Coordinate(7, 19))
 
-    for i in range(20):
+    for i in range(50):
         LOGGER.debug(f"round: {i}")
         for direction in order.keys():
             delta = movement_calibration(direction)
             if direction in ["right", "left"]:
-                delta = delta[0]
+                delta = delta.x
             else:
-                delta = delta[1]
+                delta = delta.y
             LOGGER.info(f"direction: {direction}, delta: {delta}")
             order[direction].append(delta * 2)
 

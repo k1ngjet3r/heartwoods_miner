@@ -28,7 +28,7 @@ class Searching:
 
         Args:
             item (str): path to the image to find in the screenshot
-        
+
         Return:
             list: list containing possible coordinates
         """
@@ -36,15 +36,17 @@ class Searching:
             raise FileNotFoundError(f'Cannot find the item under: {item}')
 
         possible_coordinate = []
-        item_name = item.split('/')[-1].replace('.png', '')
-        pattern = cv2.imread(item, 0)
+        item_name = str(item).split('/')[-1].replace('.png', '')
+        LOGGER.debug(f'item: {item}')
+        LOGGER.debug(f'item name: {item_name}')
+        pattern = cv2.imread(str(item), 0)
         w, h = pattern.shape[::-1]
         match_res = cv2.matchTemplate(
                                 self.img_gray, pattern, cv2.TM_CCOEFF_NORMED)
         loc = np.where(match_res >= self.match_rate)
         for p in zip(*loc[::-1]):
             coordinate = Coordinate(
-                                x = int(p[0] + w / 2), 
+                                x = int(p[0] + w / 2),
                                 y = int(p[1] + h / 2),
                                 _type = item_name
                             )
@@ -65,15 +67,15 @@ class Searching:
             LOGGER.error('Possible coordinate passed into the method is empty')
         for coor in possible_coordinate:
             cv2.circle(
-                img=self.img_rgb, 
-                center=(coor.x, coor.y), 
-                radius=5, 
-                color=(0, 0, 255), 
+                img=self.img_rgb,
+                center=(coor.x, coor.y),
+                radius=5,
+                color=(0, 0, 255),
                 thickness=-1
             )
         if not name:
             name = self.screenshot.replace('.png', '_rlt.png')
-        
+
         cv2.imwrite(name, self.img_rgb)
 
 def search_for_coal(screenshot, threshold=0.8, show=False):

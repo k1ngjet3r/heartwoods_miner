@@ -92,43 +92,47 @@ def load_mvmt_params() -> list[dict]:
     return _load_yaml_file('params/mvmt.yaml')
 
 def load_dimension_params() -> list[tuple]:
-    return _load_yaml_file('params/dimensions.yaml')
+    data = _load_yaml_file('params/dimensions.yaml')
+    return {key: Coordinate(value[0], value[1]) for key, value in data.items()}
 
 if __name__ == '__main__':
-    rlt = []
-    current = Coordinate(2, 2)
-    center = Coordinate(2, 2)
-    c1 = Coordinate(4, 0, _type='a')
+    # rlt = []
+    # current = Coordinate(2, 2)
+    # center = Coordinate(2, 2)
+    # c1 = Coordinate(4, 0, _type='a')
 
-    absolute_boundary = Boundary(
-        x_max=5,
-        x_min=0,
-        y_max=5,
-        y_min=0
-    )
-    l = [c1]
-    v = Coordinate.valid_move(
-        coordinates_list=l,
-        position=current,
-        center=center,
-        absolute_boundary=absolute_boundary
-    )
-    print('valid move', str(v))
+    # absolute_boundary = Boundary(
+    #     x_max=5,
+    #     x_min=0,
+    #     y_max=5,
+    #     y_min=0
+    # )
+    # l = [c1]
+    # v = Coordinate.valid_move(
+    #     coordinates_list=l,
+    #     position=current,
+    #     center=center,
+    #     absolute_boundary=absolute_boundary
+    # )
+    # print('valid move', str(v))
 
-    current += v
-    print('position after move', str(current))
+    # current += v
+    # print('position after move', str(current))
 
-    c2 = Coordinate(3, 1)
-    l2 = [c2]
-    v2 = Coordinate.valid_move(
-        coordinates_list=l,
-        position=current,
-        center=center,
-        absolute_boundary=absolute_boundary
-    )
-    print('valid move', str(v2))
+    # c2 = Coordinate(3, 1)
+    # l2 = [c2]
+    # v2 = Coordinate.valid_move(
+    #     coordinates_list=l,
+    #     position=current,
+    #     center=center,
+    #     absolute_boundary=absolute_boundary
+    # )
+    # print('valid move', str(v2))
+
     # c4 = c2-c1
     # c4._type = 'd'
     # print(c4.x)
     # print(c4.y)
     # print(c4._type)
+
+    print(load_dimension_params())
