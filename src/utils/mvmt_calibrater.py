@@ -20,22 +20,21 @@ CTRL = Character_Ctrl()
 def movement_calibration(direction):
     def _rock_coordinate():
         screenshot = take_screenshot()
-        return Searching(screenshot.name).find_one_item(BENCHMARK_ROCK)[0]
+        if rock_found := Searching(screenshot.name).find_one_item(BENCHMARK_ROCK):
+            return rock_found[0]
 
-    p1 = _rock_coordinate()
-
-    if direction == "up":
-        CTRL._move_vertical(-1, debug=True)
-    elif direction == "down":
-        CTRL._move_vertical(1, debug=True)
-    elif direction == "right":
-        CTRL._move_horizonal(1, debug=True)
-    elif direction == "left":
-        CTRL._move_horizonal(-1, debug=True)
-    else:
-        logging.error("Invalid direction!")
-    time.sleep(2)
-
+    if p1 := _rock_coordinate():
+        if direction == "up":
+            CTRL._move_vertical(-1, debug=True)
+        elif direction == "down":
+            CTRL._move_vertical(1, debug=True)
+        elif direction == "right":
+            CTRL._move_horizonal(1, debug=True)
+        elif direction == "left":
+            CTRL._move_horizonal(-1, debug=True)
+        else:
+            logging.error("Invalid direction!")
+    time.sleep(0.5)
     p2 = _rock_coordinate()
 
     delta = p2 - p1
