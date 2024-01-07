@@ -52,7 +52,10 @@ class Searching:
                             )
             Coordinate.append_if_not_close(coordinate, possible_coordinate)
 
-        return possible_coordinate
+        if len(possible_coordinate) > 0:
+            return possible_coordinate
+        else:
+            LOGGER.error('item not found')
 
     def find_multiple_items(self, items:list[str]) -> list[Coordinate]:
         possible_coordinate = []
