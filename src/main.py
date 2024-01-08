@@ -12,24 +12,8 @@ from utils.ctrl import Character_Ctrl
 from utils.screenshot import take_screenshot
 from utils.utils import Coordinate, load_dimension_params
 
-formatter = logging.Formatter(
-    "%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
-)
-formatter = colorlog.ColoredFormatter(
-    "%(log_color)s%(levelname)s:%(name)s:%(message)s",
-    log_colors={
-        "DEBUG": "cyan",
-        "INFO": "green",
-        "WARNING": "yellow",
-        "ERROR": "red",
-        "CRITICAL": "red,bg_white",
-    },
-)
-stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(formatter)
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
-LOGGER.addHandler(stream_handler)
 
 CTRL = Character_Ctrl()
 
