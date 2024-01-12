@@ -1,10 +1,9 @@
 import math
 import yaml
 import logging
+from glob import glob
 from pathlib import Path
-
-LOGGER = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
+from loguru import logger
 
 class Coordinate:
     def __init__(self, x, y, _type=None):
@@ -29,6 +28,12 @@ class Coordinate:
 
     def __neg__(self):
         return Coordinate(-self.x, -self.y, self._type)
+    
+    def __truediv__(self, scalar):
+        if scalar != 0:
+            return Coordinate(int(self.x / scalar), int(self.y / scalar))
+        else:
+            raise ValueError("Division by zero is not allowed")
 
     def distance_to(self, other):
         return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
@@ -61,17 +66,17 @@ class Coordinate:
     def valid_move(coordinates_list, position, center, absolute_boundary):
         sorted_coordinate_list = sorted(coordinates_list, \
                                 key=lambda coord: position.distance_to(coord))
-        LOGGER.debug(f'sorted list: {[str(c) for c in sorted_coordinate_list]}')
+        logger.debug(f'sorted list: {[str(c) for c in sorted_coordinate_list]}')
         for coord in sorted_coordinate_list:
             vector = coord - center
             absolute_coord = position + vector
-            LOGGER.debug(f'Coordinate: {coord}, vector: {str(vector)}, absolute coor: {absolute_coord}')
+            logger.debug(f'Coordinate: {coord}, vector: {str(vector)}, absolute coor: {absolute_coord}')
             if absolute_boundary.is_within_boundary(absolute_coord):
-                LOGGER.debug(f'{coord} is the closest and within boundary')
+                logger.debug(f'{coord} is the closest and within boundary')
                 vector._type = coord._type
                 return vector
         else:
-            LOGGER.debug('No valid move available')
+            logger.debug('No valid move available')
 
 class Boundary(Coordinate):
     def __init__(self, x_min, y_min, x_max, y_max):
@@ -94,6 +99,10 @@ def load_mvmt_params() -> list[dict]:
 def load_dimension_params() -> list[tuple]:
     data = _load_yaml_file('params/dimensions.yaml')
     return {key: Coordinate(value[0], value[1]) for key, value in data.items()}
+
+def load_ref_images() -> list[str]:
+    root = str(Path('../images/benchmarks/ref/*.png'))
+    return [f for f in glob(root)]
 
 if __name__ == '__main__':
     # rlt = []
@@ -135,4 +144,4 @@ if __name__ == '__main__':
     # print(c4.y)
     # print(c4._type)
 
-    print(load_dimension_params())
+    print(load_ref_images())
