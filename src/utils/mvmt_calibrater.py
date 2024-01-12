@@ -3,24 +3,22 @@ import time
 import logging
 
 from pprint import pprint
+from loguru import logger
 
 from utils.recon import Searching
-from utils.ctrl import Character_Ctrl
+from src.utils.character_ctrl import Character_Ctrl
 from utils.screenshot import take_screenshot
 from utils.utils import Coordinate
 
 BENCHMARK_ROCK = r"C:\Users\Jeter\dev\heartwoods_miner\images\benchmarks\river_rock.png"
 
-LOGGER = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 CTRL = Character_Ctrl()
 
-
 def movement_calibration(direction):
+    @logger.catch
     def _rock_coordinate():
         screenshot = take_screenshot()
-        if rock_found := Searching(screenshot.name).find_one_item(BENCHMARK_ROCK):
+        if rock_found := Searching(screenshot.filepath).find_one_item(BENCHMARK_ROCK):
             return rock_found[0]
 
     if p1 := _rock_coordinate():
@@ -48,14 +46,14 @@ if __name__ == "__main__":
     ctrl.click_window(Coordinate(7, 19))
 
     for i in range(50):
-        LOGGER.debug(f"round: {i}")
+        logger.debug(f"round: {i}")
         for direction in order.keys():
             delta = movement_calibration(direction)
             if direction in ["right", "left"]:
                 delta = delta.x
             else:
                 delta = delta.y
-            LOGGER.info(f"direction: {direction}, delta: {delta}")
+            logger.info(f"direction: {direction}, delta: {delta}")
             order[direction].append(delta * 2)
 
     for direction in order:

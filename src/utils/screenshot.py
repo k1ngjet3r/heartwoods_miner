@@ -1,9 +1,10 @@
 import os
-import logging
+import cv2
 import pyautogui
 import pygetwindow as pgw
 
 from pathlib import Path
+from loguru import logger
 from datetime import datetime
 from dataclasses import dataclass
 
@@ -11,8 +12,6 @@ from PIL import Image
 
 from utils.utils import Coordinate, Boundary
 
-LOGGER = logging.getLogger(__name__)
-# logging.basicConfig(level=logging.DEBUG)
 
 IMAGE_ROOT = str(Path("../images"))
 
@@ -48,7 +47,7 @@ def take_screenshot(new_file=False):
     image_name = os.path.join(IMAGE_ROOT, filename)
     titles = pgw.getAllTitles()
     if "Heartwood Online" not in titles:
-        LOGGER.error("Heartwood Online window cannot be found!")
+        logger.critical("Heartwood Online window cannot be found!")
     else:
         window = pgw.getWindowsWithTitle("Heartwood Online")[0]
 
@@ -60,6 +59,7 @@ def take_screenshot(new_file=False):
         corrected_right = corrected_left + game_resolution.x
         corrected_bottom = corrected_top + game_resolution.y
 
+        logger.debug('Taking screenshot...')
         pyautogui.screenshot(image_name)
         im = Image.open(image_name)
         im = im.crop((
@@ -81,6 +81,60 @@ def take_screenshot(new_file=False):
             character_center,
             top_left_coordinate
         )
+
+def mark_coordinates_on_screenshot(screenshot:str, coordinates:list[Coordinate]):
+    output_img_name = screenshot.replace('.png', '_rlt.png')
+    image = cv2.imread(screenshot)
+
+    for coord in coordinates:
+        cv2.circle(
+            img=image,
+            center=(coord.x, coord.y),
+            radius=2,
+            thickness=-1,
+            color=(0, 0, 255)
+        )
+    cv2.imwrite(output_img_name, image)
+
+class Mark_Coordinates:
+    def __init__(self, screenshot, coordinates) -> None:
+        self.output_name = screenshot.replace(
+                                    '.png', '_marked.png')
+        self.image = cv2.imread(screenshot)
+        self.coordinates = coordinates
+
+    def point(self):
+        for coord in self.coordinates:
+            cv2.circle(
+                img=self.image,
+                center=(coord.x, coord.y),
+                radius=2,
+                thickness=-1,
+                color=(0, 0, 255)
+        )
+        cv2.imwrite(self.output_name, self.image)
+
+    def box(self, dimension_params:dict):
+        for coord in self.coordinates:
+            if coord._type == 'coal_big':
+                dimension = dimension_params.get('coal_big')
+            elif 'coal_small' in coord._type:
+                dimension = dimension_params.get('coal_small')
+            else:
+                raise NotImplementedError(
+                    'Entered value did not implemented yet')
+
+            start_point = coord - dimension/2
+            end_point = start_point + dimension
+
+            cv2.rectangle(
+                img=self.image,
+                pt1=(start_point.x, start_point.y),
+                pt2=(end_point.x, end_point.y),
+                thickness=2,
+                color=(0, 0, 255)
+            )
+        cv2.imwrite(self.output_name, self.image)
 
 if __name__ == "__main__":
     take_screenshot()

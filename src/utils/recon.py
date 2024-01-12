@@ -1,17 +1,13 @@
 import os
 import cv2
-import math
-import logging
 import numpy as np
 
 from glob import glob
 from pathlib import Path
+from loguru import logger
 
-from utils.utils import Coordinate
-from utils.screenshot import Screenshot
-
-LOGGER = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
+from utils.utils import Coordinate, load_dimension_params
+from utils.screenshot import Mark_Coordinates
 
 def load_items(path) -> list[str]:
     return [f for f in glob(path)]
@@ -33,12 +29,12 @@ class Searching:
             list: list containing possible coordinates
         """
         if not os.path.exists(item):
-            raise FileNotFoundError(f'Cannot find the item under: {item}')
+            logger.critical(f'Item: {item} cannot found')
+            raise FileNotFoundError(f'Cannot find the item un   der: {item}')
 
         possible_coordinate = []
         item_name = str(item).split('/')[-1].replace('.png', '')
-        LOGGER.debug(f'item: {item}')
-        LOGGER.debug(f'item name: {item_name}')
+        logger.debug(f'finding item: {item_name} in screenshot: {self.screenshot}')
         pattern = cv2.imread(str(item), 0)
         w, h = pattern.shape[::-1]
         match_res = cv2.matchTemplate(
@@ -53,56 +49,41 @@ class Searching:
             Coordinate.append_if_not_close(coordinate, possible_coordinate)
 
         if len(possible_coordinate) > 0:
+            logger.info(
+                f'Item found in following coordinates: {[str(c) for c in possible_coordinate]}'
+            )
             return possible_coordinate
         else:
-            LOGGER.error('item not found')
+            logger.debug('item not found')
 
     def find_multiple_items(self, items:list[str]) -> list[Coordinate]:
         possible_coordinate = []
         for item in items:
-            if len(search_rlt := self.find_one_item(item)) != 0:
+            if search_rlt := self.find_one_item(item):
                 possible_coordinate += search_rlt
 
         return possible_coordinate
 
-    def mark_item_on_screenshot(self, possible_coordinate, name=None):
-        if not possible_coordinate or len(possible_coordinate) == 0:
-            LOGGER.error('Possible coordinate passed into the method is empty')
-        for coor in possible_coordinate:
-            cv2.circle(
-                img=self.img_rgb,
-                center=(coor.x, coor.y),
-                radius=5,
-                color=(0, 0, 255),
-                thickness=-1
-            )
-        if not name:
-            name = self.screenshot.replace('.png', '_rlt.png')
-
-        cv2.imwrite(name, self.img_rgb)
-
 def search_for_coal(screenshot, threshold=0.8, show=False):
     coal_images_path = Path('../images/coal/*.png')
     items = load_items(str(coal_images_path))
-    LOGGER.info(f'images: {items}')
+    logger.info(f'images: {items}')
     s = Searching(screenshot, match_rate=threshold)
     possible_location = s.find_multiple_items(items)
     if show:
-        s.mark_item_on_screenshot(possible_location)
+        dimension_params = load_dimension_params()
+        Mark_Coordinates(screenshot, possible_location).bow(dimension_params)
 
     return possible_location
 
 if __name__ == "__main__":
-    search = Searching(
-        screenshot='/Users/jeterlin/Dev/github/heartwoods_miner/images/benchmarks/benchmark_3.png',
-    )
-    center = Coordinate(648, 364)
-    rlt = search.find_one_item('/Users/jeterlin/Dev/github/heartwoods_miner/images/benchmarks/origin_ref.png')
-    search.mark_item_on_screenshot(rlt)
+    screenshot='/Users/jeterlin/Dev/github/heartwoods_miner/images/benchmarks/benchmark_2.png'
+    coal_images_path = Path('../images/coal/*.png')
+    items = load_items(str(coal_images_path))
+    search = Searching(screenshot)
+    # rlt = search.find_one_item('/Users/jeterlin/Dev/github/heartwoods_miner/images/coal/coal_small_1.png')
+    rlt = search.find_multiple_items(items)
+    dimension_params = load_dimension_params()
 
-    print("reference offset")
-    for r in rlt:
-        distance = r - center
-        print(str(distance))
-
-    # print(b)
+    Mark_Coordinates(screenshot, rlt).box(dimension_params)
+    

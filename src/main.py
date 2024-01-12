@@ -1,35 +1,17 @@
 import sys
 import time
 import logging
-import colorlog
 
-from pprint import pprint
 from pathlib import Path
 from PIL import Image
 
 from utils.recon import load_items, Searching
-from utils.ctrl import Character_Ctrl
+from src.utils.character_ctrl import Character_Ctrl
 from utils.screenshot import take_screenshot
 from utils.utils import Coordinate, load_dimension_params
 
-formatter = logging.Formatter(
-    "%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
-)
-formatter = colorlog.ColoredFormatter(
-    "%(log_color)s%(levelname)s:%(name)s:%(message)s",
-    log_colors={
-        "DEBUG": "cyan",
-        "INFO": "green",
-        "WARNING": "yellow",
-        "ERROR": "red",
-        "CRITICAL": "red,bg_white",
-    },
-)
-stream_handler = logging.StreamHandler()
-stream_handler.setFormatter(formatter)
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
-LOGGER.addHandler(stream_handler)
 
 CTRL = Character_Ctrl()
 
@@ -37,7 +19,6 @@ ITEM_DIMENSION = load_dimension_params()
 CHARACTER_OFFSET = Coordinate(int(ITEM_DIMENSION.get("character").x / 2), 0)
 
 REF_IMG_PATH = str(Path("../images/benchmarks/origin_ref.png"))
-
 
 class Miner:
     def __init__(self):
@@ -74,7 +55,7 @@ class Miner:
 
         while True:
             current_window = take_screenshot()
-            search_rlt = Searching(screenshot=current_window.name)
+            search_rlt = Searching(screenshot=current_window.filepath)
             possible_ore = search_rlt.find_multiple_items(items=ore_list)
             if len(possible_ore) > 0:
                 LOGGER.info(
@@ -110,9 +91,16 @@ class Miner:
                 LOGGER.debug("No coal was found")
                 self.return_to_origin()
 
+    def _take_screenshot_and_find_items(self, item_list):
+        window = take_screenshot()
+        search = Searching(screenshot=window.filepath)
+        possible_location = search.find_multiple_items(items=item_list)
+        if len(possible_location) > 0:
+            return possible_location
+
     def _move(self, vector):
         LOGGER.debug(f"Move: {vector}")
-        CTRL.move_to(vector)
+        CTRL.move(vector)
         self.displacement += vector
 
     def return_to_origin(self):
@@ -142,7 +130,7 @@ class Miner:
 
     def _get_ref_coordinate(self):
         window = take_screenshot()
-        search = Searching(window.name, match_rate=0.95)
+        search = Searching(window.filepath, match_rate=0.95)
         ref_coord = search.find_one_item(REF_IMG_PATH)
         if len(ref_coord) > 0:
             ref_found_coord = ref_coord[0]
