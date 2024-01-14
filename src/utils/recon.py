@@ -33,7 +33,8 @@ class Searching:
             raise FileNotFoundError(f'Cannot find the item un   der: {item}')
 
         possible_coordinate = []
-        item_name = str(item).split('/')[-1].replace('.png', '')
+        # item_name = str(item).split('/')[-1].replace('.png', '')
+        item_name = item
         logger.debug(f'finding item: {item_name} in screenshot: {self.screenshot}')
         pattern = cv2.imread(str(item), 0)
         w, h = pattern.shape[::-1]
@@ -64,6 +65,14 @@ class Searching:
 
         return possible_coordinate
 
+def _search_and_return_coordinate(screenshot, img_root, threshold=0.8):
+    img_root_path = str(Path(img_root))
+    items = load_items(img_root_path)
+    s = Searching(screenshot, match_rate=threshold)
+    possible_location = s.find_multiple_items(items)
+    if len(possible_location) > 0:
+        return possible_location
+
 def search_for_coal(screenshot, threshold=0.8, show=False):
     coal_images_path = Path('../images/coal/*.png')
     items = load_items(str(coal_images_path))
@@ -72,18 +81,16 @@ def search_for_coal(screenshot, threshold=0.8, show=False):
     possible_location = s.find_multiple_items(items)
     if show:
         dimension_params = load_dimension_params()
-        Mark_Coordinates(screenshot, possible_location).bow(dimension_params)
+        Mark_Coordinates(screenshot, possible_location).box(dimension_params)
 
+    return possible_location
+
+def find_ref_rock(screenshot, threshold=0.8):
+    ref_image_root = '../images/benchmarks/refs/*.png'
+    possible_location = _search_and_return_coordinate(screenshot, ref_image_root)
     return possible_location
 
 if __name__ == "__main__":
     screenshot='/Users/jeterlin/Dev/github/heartwoods_miner/images/benchmarks/benchmark_2.png'
-    coal_images_path = Path('../images/coal/*.png')
-    items = load_items(str(coal_images_path))
-    search = Searching(screenshot)
-    # rlt = search.find_one_item('/Users/jeterlin/Dev/github/heartwoods_miner/images/coal/coal_small_1.png')
-    rlt = search.find_multiple_items(items)
-    dimension_params = load_dimension_params()
-
-    Mark_Coordinates(screenshot, rlt).box(dimension_params)
-    
+    possible_coordinates = find_ref_rock(screenshot)
+    Mark_Coordinates(screenshot, possible_coordinates).box()
