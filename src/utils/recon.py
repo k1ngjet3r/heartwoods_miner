@@ -34,8 +34,7 @@ class Searching:
 
         possible_coordinate = []
         # item_name = str(item).split('/')[-1].replace('.png', '')
-        item_name = item
-        logger.debug(f'finding item: {item_name} in screenshot: {self.screenshot}')
+        logger.debug(f'finding item: {item} in screenshot: {self.screenshot}')
         pattern = cv2.imread(str(item), 0)
         w, h = pattern.shape[::-1]
         match_res = cv2.matchTemplate(
@@ -45,7 +44,7 @@ class Searching:
             coordinate = Coordinate(
                                 x = int(p[0] + w / 2),
                                 y = int(p[1] + h / 2),
-                                _type = item_name
+                                _type = item
                             )
             Coordinate.append_if_not_close(coordinate, possible_coordinate)
 
@@ -91,6 +90,6 @@ def find_ref_rock(screenshot, threshold=0.8):
     return possible_location
 
 if __name__ == "__main__":
-    screenshot='/Users/jeterlin/Dev/github/heartwoods_miner/images/benchmarks/benchmark_2.png'
+    screenshot='/Users/jeterlin/Dev/github/heartwoods_miner/images/benchmarks/benchmark_3.png'
     possible_coordinates = find_ref_rock(screenshot)
     Mark_Coordinates(screenshot, possible_coordinates).box()
