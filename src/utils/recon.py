@@ -30,7 +30,7 @@ class Searching:
         """
         if not os.path.exists(item):
             logger.critical(f'Item: {item} cannot found')
-            raise FileNotFoundError(f'Cannot find the item un   der: {item}')
+            raise FileNotFoundError(f'Cannot find the item under: {item}')
 
         possible_coordinate = []
         # item_name = str(item).split('/')[-1].replace('.png', '')
