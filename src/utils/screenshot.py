@@ -37,7 +37,7 @@ class Screenshot:
     filepath: str
     window_center: Coordinate
     character_center: Coordinate
-    top_left_coordinate: Coordinate = None
+    top_left_coordinate: Coordinate
 
 def take_screenshot(new_file=False):
     if new_file:
@@ -137,4 +137,5 @@ class Mark_Coordinates:
         cv2.imwrite(self.output_name, self.image)
 
 if __name__ == "__main__":
-    take_screenshot()
+    screenshot = take_screenshot()
+    print(screenshot.character_center)
