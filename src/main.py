@@ -7,8 +7,16 @@ from PIL import Image
 
 from utils.recon import load_items, Searching
 from utils.character_ctrl import Character_Ctrl
-from utils.screenshot import take_screenshot, mark_coordinates_on_screenshot
-from utils.utils import Coordinate, load_dimension_params
+from utils.screenshot import (
+    take_screenshot, 
+    mark_coordinates_on_screenshot, 
+    game_resolution
+)
+from utils.utils import (
+    Coordinate, 
+    load_dimension_params, 
+    Boundary
+)
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
@@ -20,25 +28,27 @@ CHARACTER_OFFSET = Coordinate(int(ITEM_DIMENSION.get("character").x / 2), 0)
 
 REF_IMG_PATH = str(Path("../images/benchmarks/origin_ref.png"))
 
-
 class Miner:
+    boundary = Boundary(
+        x_min= -game_resolution.x/2,
+        y_min= -game_resolution.y/2,
+        x_max= game_resolution.x/2,
+        y_max= game_resolution.y/2
+    )
+    displacement = Coordinate(0, 0)
+    ref_coord = None
+
     def __init__(self):
         time.sleep(2)
         window = take_screenshot()
-        self.ref_coord = None
-        # TODO: added position and boundary back to class
         self.character_center = window.character_center
-        self.position = None
-        self.boundary = None
-        self.displacement = Coordinate(0, 0)
         CTRL.click_window(window.top_left_coordinate)
 
     @staticmethod
     def _calculate_coal_offset(_type):
-        if _type == "coal_big":
-            return Coordinate(int(ITEM_DIMENSION.get("coal_big").x) / 2, 0)
-        else:
-            return Coordinate(int(ITEM_DIMENSION.get("coal_small").x) / 2, 0)
+        with Image.open(_type) as img:
+            w, _ = img.size
+        return Coordinate(w/2, 0)
 
     def start_mining_coal(self, ore_root: str):
         """
@@ -64,7 +74,10 @@ class Miner:
                     f"possible ore location: {[(coor.x, coor.y) for coor in possible_ore]}"
                 )
                 move_vector = Coordinate.valid_move(
-                    possible_ore, self.position, self.character_center, self.boundary
+                    possible_ore, 
+                    self.displacement, 
+                    self.character_center, 
+                    self.boundary
                 )
 
                 if move_vector:
@@ -74,10 +87,8 @@ class Miner:
 
                     if move_vector.x > 0:
                         move_vector -= location_offset
-                        click_position = self.character_center + coal_offset
                     else:
                         move_vector += location_offset
-                        click_position = self.character_center - coal_offset
 
                     self._move(move_vector)
                     CTRL.mine(self.character_center)
