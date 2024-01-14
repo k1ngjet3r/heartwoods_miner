@@ -114,16 +114,12 @@ class Mark_Coordinates:
         )
         cv2.imwrite(self.output_name, self.image)
 
-    def box(self, dimension_params:dict):
+    def box(self, color=(0, 0, 255)):
         for coord in self.coordinates:
-            if coord._type == 'coal_big':
-                dimension = dimension_params.get('coal_big')
-            elif 'coal_small' in coord._type:
-                dimension = dimension_params.get('coal_small')
-            else:
-                raise NotImplementedError(
-                    'Entered value did not implemented yet')
-
+            image_dir = coord._type
+            with Image.open(image_dir) as img:
+                w, h = img.size
+            dimension = Coordinate(w, h)
             start_point = coord - dimension/2
             end_point = start_point + dimension
 
@@ -132,10 +128,18 @@ class Mark_Coordinates:
                 pt1=(start_point.x, start_point.y),
                 pt2=(end_point.x, end_point.y),
                 thickness=2,
-                color=(0, 0, 255)
+                color=color
+            )
+            cv2.putText(
+                img=self.image,
+                text=Path(image_dir).name.replace('.png', ''),
+                org=(start_point.x, start_point.y-10),
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX, 
+                fontScale=0.5,
+                color=color,
+                thickness=2
             )
         cv2.imwrite(self.output_name, self.image)
 
 if __name__ == "__main__":
-    screenshot = take_screenshot()
-    print(screenshot.character_center)
+    pass
