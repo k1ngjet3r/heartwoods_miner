@@ -6,8 +6,8 @@ from pathlib import Path
 from PIL import Image
 
 from utils.recon import load_items, Searching
-from src.utils.character_ctrl import Character_Ctrl
-from utils.screenshot import take_screenshot
+from utils.character_ctrl import Character_Ctrl
+from utils.screenshot import take_screenshot, mark_coordinates_on_screenshot
 from utils.utils import Coordinate, load_dimension_params
 
 LOGGER = logging.getLogger(__name__)
@@ -20,16 +20,18 @@ CHARACTER_OFFSET = Coordinate(int(ITEM_DIMENSION.get("character").x / 2), 0)
 
 REF_IMG_PATH = str(Path("../images/benchmarks/origin_ref.png"))
 
+
 class Miner:
     def __init__(self):
         time.sleep(2)
         window = take_screenshot()
         self.ref_coord = None
-        self.center = window.absolute_center
-        self.position = window.relative_center
-        self.boundary = window.boundary
+        # TODO: added position and boundary back to class
+        self.character_center = window.character_center
+        self.position = None
+        self.boundary = None
         self.displacement = Coordinate(0, 0)
-        CTRL.click_window(window.top_left_corner)
+        CTRL.click_window(window.top_left_coordinate)
 
     @staticmethod
     def _calculate_coal_offset(_type):
@@ -62,7 +64,7 @@ class Miner:
                     f"possible ore location: {[(coor.x, coor.y) for coor in possible_ore]}"
                 )
                 move_vector = Coordinate.valid_move(
-                    possible_ore, self.position, self.center, self.boundary
+                    possible_ore, self.position, self.character_center, self.boundary
                 )
 
                 if move_vector:
@@ -72,13 +74,13 @@ class Miner:
 
                     if move_vector.x > 0:
                         move_vector -= location_offset
-                        click_position = self.center + coal_offset
+                        click_position = self.character_center + coal_offset
                     else:
                         move_vector += location_offset
-                        click_position = self.center - coal_offset
+                        click_position = self.character_center - coal_offset
 
                     self._move(move_vector)
-                    CTRL.mine(self.center)
+                    CTRL.mine(self.character_center)
                     if "big" in coal_type:
                         time.sleep(8)
                     else:
@@ -128,17 +130,22 @@ class Miner:
         else:
             raise NotImplementedError("origin calibration is not finish")
 
-    def _get_ref_coordinate(self):
-        window = take_screenshot()
-        search = Searching(window.filepath, match_rate=0.95)
-        ref_coord = search.find_one_item(REF_IMG_PATH)
-        if len(ref_coord) > 0:
-            ref_found_coord = ref_coord[0]
-            LOGGER.debug(f"Ref found: {ref_found_coord}")
-            return ref_found_coord
+    def _get_ref_coordinate(self, retry=5):
+        while retry > 0:
+            window = take_screenshot()
+            search = Searching(window.filepath, match_rate=0.95)
+            ref_coord = search.find_one_item(REF_IMG_PATH)
+            if ref_coord:
+                ref_found_coord = ref_coord[0]
+                mark_coordinates_on_screenshot(window.filepath, [ref_found_coord])
+                LOGGER.debug(f"Ref found: {ref_found_coord}")
+                return ref_found_coord
+            else:
+                retry -= 1
+                LOGGER.debug("Cannot find the reference, retry in 2 sec")
+                time.sleep(2)
         else:
             LOGGER.error("Cannot find the reference, please relocate the character!")
-            return None
 
     def check_inventory(self):
         """open inventory and check if the inventory is full
@@ -172,39 +179,29 @@ class Miner:
 
 
 if __name__ == "__main__":
+    import csv
+
+    csv_file_name = "example.csv"
     coal_root = str(Path("../images/coal/*.png"))
     miner = Miner()
-    # miner.set_reference_point()
-    # LOGGER.info("move to (20, 20)")
-    # miner._move(Coordinate(20, 20))
-    # time.sleep(5)
-    # LOGGER.info("return to origin...")
-    # miner.return_to_origin()
-    # miner._move(Coordinate(20, 0))
+    rlt = {}
+    print("Start")
 
-    # LOGGER.info("calibrating the origin")
-    # miner.calibrate_origin()
-    miner.start_mining_coal(coal_root)
+    # with open(csv_file_name, mode="w", newline="") as file:
+    #     writer = csv.writer(file)
+    #     for i in range(200):
+    #         duration = (i + 1) * 0.005
+    #         p1 = miner._get_ref_coordinate()
+    #         CTRL._hold_and_release("d", duration)
+    #         p2 = miner._get_ref_coordinate()
+    #         CTRL._hold_and_release("a", duration)
 
-    # ref_coordinate = Coordinate(516, 105)
-    # ref_path = Path('../images/benchmarks/origin_ref.png')
+    #         writer.writerow([str(duration), p2.x-p1.x])
 
-    # img_name = '/Users/jeterlin/Dev/github/heartwoods_miner/images/benchmarks/benchmark_3.png'
-    # test_img_name = '/Users/jeterlin/Dev/github/heartwoods_miner/images/test.png'
-
-    # img = Image.open(img_name)
-    # w, h = img.size
-    # _center = Coordinate(int(w/2), int(h/2))
-    # search = Searching(screenshot=img_name)
-    # ref_found = search.find_one_item(str(ref_path))
-    # print(f'screenshot dimension: {(w, h)}')
-    # print(f'center: {_center}')
-    # print(f'center type: {type(_center)}')
-    # print(f'ref coord: {ref_found}')
-    # print(f'ref type: {type(ref_found)}')
-    # print(f'delta: {str(ref_found[0]-_center)}')
-
-    # ref_found.append(_center)
-    # print(f'ref coord: {ref_found}')
-
-    # search.mark_item_on_screenshot(ref_found)
+    p1 = miner._get_ref_coordinate()
+    # CTRL._hold_and_release("d", 0.001)
+    CTRL.press("right", presses=10)
+    # CTRL.press("d")
+    # CTRL.press("d")
+    p2 = miner._get_ref_coordinate()
+    print(p2.x - p1.x)
