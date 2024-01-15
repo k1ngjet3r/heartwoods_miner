@@ -17,6 +17,7 @@ IMAGE_ROOT = str(Path("../images"))
 
 TITLE_BAR_OFFSET = 31
 
+
 @dataclass
 class game_resolution:
     x = 1280
@@ -24,9 +25,10 @@ class game_resolution:
     x_offset = 8
     y_offset = 31
 
+
 @dataclass
 class Screenshot:
-    """ Storing the detail of a screen shot
+    """Storing the detail of a screen shot
 
     Args:
         filepath (str): name of the saved screenshot filepath
@@ -34,16 +36,18 @@ class Screenshot:
         character_coordinate (Coordinate): the center of the game screen (exclude the title bar)
 
     """
+
     filepath: str
     window_center: Coordinate
     character_center: Coordinate
     top_left_coordinate: Coordinate
 
+
 def take_screenshot(new_file=False):
     if new_file:
         filename = datetime.now().strftime("%H_%M_%S") + ".png"
     else:
-        filename = 'screenshot.png'
+        filename = "screenshot.png"
     image_name = os.path.join(IMAGE_ROOT, filename)
     titles = pgw.getAllTitles()
     if "Heartwood Online" not in titles:
@@ -59,31 +63,25 @@ def take_screenshot(new_file=False):
         corrected_right = corrected_left + game_resolution.x
         corrected_bottom = corrected_top + game_resolution.y
 
-        logger.debug('Taking screenshot...')
+        logger.debug("Taking screenshot...")
         pyautogui.screenshot(image_name)
         im = Image.open(image_name)
-        im = im.crop((
-            corrected_left , corrected_top, corrected_right, corrected_bottom))
+        im = im.crop((corrected_left, corrected_top, corrected_right, corrected_bottom))
         im.save(image_name)
 
-        window_center = Coordinate(
-            int((left + right) / 2),
-            int((top + bottom) / 2)
-        )
+        window_center = Coordinate(int((left + right) / 2), int((top + bottom) / 2))
         character_center = Coordinate(
             int(game_resolution.x_offset + game_resolution.x / 2 + left),
-            int(game_resolution.y_offset + game_resolution.y / 2 + top)
+            int(game_resolution.y_offset + game_resolution.y / 2 + top),
         )
         top_left_coordinate = Coordinate(left + 10, top + 10)
         return Screenshot(
-            image_name,
-            window_center,
-            character_center,
-            top_left_coordinate
+            image_name, window_center, character_center, top_left_coordinate
         )
 
-def mark_coordinates_on_screenshot(screenshot:str, coordinates:list[Coordinate]):
-    output_img_name = screenshot.replace('.png', '_rlt.png')
+
+def mark_coordinates_on_screenshot(screenshot: str, coordinates: list[Coordinate]):
+    output_img_name = screenshot.replace(".png", "_rlt.png")
     image = cv2.imread(screenshot)
 
     for coord in coordinates:
@@ -92,14 +90,17 @@ def mark_coordinates_on_screenshot(screenshot:str, coordinates:list[Coordinate])
             center=(coord.x, coord.y),
             radius=2,
             thickness=-1,
-            color=(0, 0, 255)
+            color=(0, 0, 255),
         )
     cv2.imwrite(output_img_name, image)
 
+
 class Mark_Coordinates:
-    def __init__(self, screenshot, coordinates) -> None:
-        self.output_name = screenshot.replace(
-                                    '.png', '_marked.png')
+    def __init__(self, screenshot, coordinates, new_file=False) -> None:
+        if new_file:
+            self.output_name = screenshot.replace(".png", "_marked.png")
+        else:
+            self.output_name = screenshot
         self.image = cv2.imread(screenshot)
         self.coordinates = coordinates
 
@@ -110,17 +111,26 @@ class Mark_Coordinates:
                 center=(coord.x, coord.y),
                 radius=2,
                 thickness=-1,
-                color=(0, 0, 255)
-        )
+                color=(0, 0, 255),
+            )
         cv2.imwrite(self.output_name, self.image)
 
-    def box(self, color=(0, 0, 255)):
+    def box(self, color='red'):
+        if color == 'red':
+            _color = (0, 0 , 255)
+        elif color == 'blue':
+            _color = (255, 0, 0)
+        elif color == 'green':
+            _color = (0, 255, 0)
+        else:
+            raise ValueError('Color only accept "red, blue, and green!"')
+
         for coord in self.coordinates:
             image_dir = coord._type
             with Image.open(image_dir) as img:
                 w, h = img.size
             dimension = Coordinate(w, h)
-            start_point = coord - dimension/2
+            start_point = coord - dimension / 2
             end_point = start_point + dimension
 
             cv2.rectangle(
@@ -128,18 +138,19 @@ class Mark_Coordinates:
                 pt1=(start_point.x, start_point.y),
                 pt2=(end_point.x, end_point.y),
                 thickness=2,
-                color=color
+                color=_color,
             )
             cv2.putText(
                 img=self.image,
-                text=Path(image_dir).name.replace('.png', ''),
-                org=(start_point.x, start_point.y-10),
-                fontFace=cv2.FONT_HERSHEY_SIMPLEX, 
+                text=Path(image_dir).name.replace(".png", ""),
+                org=(start_point.x, start_point.y - 10),
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                 fontScale=0.5,
-                color=color,
-                thickness=2
+                color=_color,
+                thickness=2,
             )
         cv2.imwrite(self.output_name, self.image)
+
 
 if __name__ == "__main__":
     pass
