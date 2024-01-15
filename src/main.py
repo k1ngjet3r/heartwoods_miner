@@ -1,39 +1,33 @@
 import sys
 import time
-import logging
 
+from loguru import logger
 from pathlib import Path
 from PIL import Image
 
-from utils.recon import load_items, Searching
+from utils.recon import load_items, Searching, search_for_coal, find_ref_rock
 from utils.character_ctrl import Character_Ctrl
 from utils.screenshot import (
-    take_screenshot, 
-    mark_coordinates_on_screenshot, 
-    game_resolution
+    take_screenshot,
+    mark_coordinates_on_screenshot,
+    game_resolution,
 )
-from utils.utils import (
-    Coordinate, 
-    load_dimension_params, 
-    Boundary
-)
-
-LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(logging.DEBUG)
+from utils.utils import Coordinate, load_dimension_params, Boundary
 
 CTRL = Character_Ctrl()
 
 ITEM_DIMENSION = load_dimension_params()
 CHARACTER_OFFSET = Coordinate(int(ITEM_DIMENSION.get("character").x / 2), 0)
 
-REF_IMG_PATH = str(Path("../images/benchmarks/origin_ref.png"))
+REF_IMG_PATH = str(Path("../images/benchmarks/refs/ref_rock_left_top.png"))
+
 
 class Miner:
     boundary = Boundary(
-        x_min= -game_resolution.x/2,
-        y_min= -game_resolution.y/2,
-        x_max= game_resolution.x/2,
-        y_max= game_resolution.y/2
+        x_min=-game_resolution.x / 2,
+        y_min=-game_resolution.y / 2,
+        x_max=game_resolution.x / 2,
+        y_max=game_resolution.y / 2,
     )
     displacement = Coordinate(0, 0)
     ref_coord = None
@@ -48,36 +42,31 @@ class Miner:
     def _calculate_coal_offset(_type):
         with Image.open(_type) as img:
             w, _ = img.size
-        return Coordinate(w/2, 0)
+        return Coordinate(w / 2, 0)
 
-    def start_mining_coal(self, ore_root: str):
+    def start_mining_coal(self):
         """
         Args:
             ore_root (list): path to ore images
         """
-        ore_list = load_items(ore_root)
         self.set_reference_point()
 
         if not self.ref_coord:
-            sys.exit()
-
-        if len(ore_list) == 0:
-            LOGGER.info(f"Cannot find any coal image from following folder: {ore_root}")
+            logger.error("Fail to find the ref rock!")
             sys.exit()
 
         while True:
-            current_window = take_screenshot()
-            search_rlt = Searching(screenshot=current_window.filepath)
-            possible_ore = search_rlt.find_multiple_items(items=ore_list)
-            if len(possible_ore) > 0:
-                LOGGER.info(
+            screenshot = take_screenshot()
+            possible_ore = search_for_coal(screenshot.filepath, show=True)
+            if possible_ore:
+                logger.info(
                     f"possible ore location: {[(coor.x, coor.y) for coor in possible_ore]}"
                 )
                 move_vector = Coordinate.valid_move(
-                    possible_ore, 
-                    self.displacement, 
-                    self.character_center, 
-                    self.boundary
+                    possible_ore,
+                    self.displacement,
+                    self.character_center,
+                    self.boundary,
                 )
 
                 if move_vector:
@@ -97,40 +86,33 @@ class Miner:
                     else:
                         time.sleep(6)
                 else:
-                    LOGGER.debug("No availible coal was in the boundary")
+                    logger.debug("No availible coal was in the boundary")
                     self.return_to_origin()
 
             else:
-                LOGGER.debug("No coal was found")
+                logger.debug("No coal was found")
                 self.return_to_origin()
 
-    def _take_screenshot_and_find_items(self, item_list):
-        window = take_screenshot()
-        search = Searching(screenshot=window.filepath)
-        possible_location = search.find_multiple_items(items=item_list)
-        if len(possible_location) > 0:
-            return possible_location
-
     def _move(self, vector):
-        LOGGER.debug(f"Move: {vector}")
+        logger.debug(f"Move: {vector}")
         CTRL.move(vector)
         self.displacement += vector
 
     def return_to_origin(self):
         if self.displacement.x == 0 and self.displacement.y == 0:
-            LOGGER.debug("Current location is at origin, wait for coal respawn...")
+            logger.debug("Current location is at origin, wait for coal respawn...")
             time.sleep(5)
         else:
-            LOGGER.debug(
+            logger.debug(
                 "Current location is not at original, moving character back to origin"
             )
             self._move(-self.displacement)
 
     def calibrate_origin(self):
         if ref_found_coord := self._get_ref_coordinate():
-            LOGGER.debug(f"Ref found: {ref_found_coord}")
+            logger.debug(f"Ref found: {ref_found_coord}")
             vector = ref_found_coord - self.ref_coord
-            LOGGER.debug(f"which is off by: {vector}")
+            logger.debug(f"which is off by: {vector}")
             self._move(vector)
         else:
             raise NotImplementedError("origin calibration is not finish")
@@ -144,19 +126,14 @@ class Miner:
     def _get_ref_coordinate(self, retry=5):
         while retry > 0:
             window = take_screenshot()
-            search = Searching(window.filepath, match_rate=0.95)
-            ref_coord = search.find_one_item(REF_IMG_PATH)
-            if ref_coord:
-                ref_found_coord = ref_coord[0]
-                mark_coordinates_on_screenshot(window.filepath, [ref_found_coord])
-                LOGGER.debug(f"Ref found: {ref_found_coord}")
-                return ref_found_coord
+            if ref_found := find_ref_rock(window.filepath, show=True):
+                return ref_found
             else:
                 retry -= 1
-                LOGGER.debug("Cannot find the reference, retry in 2 sec")
+                logger.debug("Cannot find the reference, retry in 2 sec")
                 time.sleep(2)
         else:
-            LOGGER.error("Cannot find the reference, please relocate the character!")
+            logger.error("Cannot find the reference, please relocate the character!")
 
     def check_inventory(self):
         """open inventory and check if the inventory is full
@@ -189,14 +166,12 @@ class Miner:
         CTRL.go_to_town
 
 
-if __name__ == "__main__":
-    import csv
-
-    csv_file_name = "example.csv"
-    coal_root = str(Path("../images/coal/*.png"))
-    miner = Miner()
-    rlt = {}
-    print("Start")
+if __name__ == "__main__":  # import csv
+    # csv_file_name = "example.csv"
+    # coal_root = str(Path("../images/coal/*.png"))
+    # miner = Miner()
+    # rlt = {}
+    # print("Start")
 
     # with open(csv_file_name, mode="w", newline="") as file:
     #     writer = csv.writer(file)
@@ -209,10 +184,12 @@ if __name__ == "__main__":
 
     #         writer.writerow([str(duration), p2.x-p1.x])
 
-    p1 = miner._get_ref_coordinate()
+    # p1 = miner._get_ref_coordinate()
     # CTRL._hold_and_release("d", 0.001)
-    CTRL.press("right", presses=10)
+    # CTRL.press("right", presses=10)
     # CTRL.press("d")
     # CTRL.press("d")
-    p2 = miner._get_ref_coordinate()
-    print(p2.x - p1.x)
+    # p2 = miner._get_ref_coordinate()
+    # print(p2.x - p1.x)
+    miner = Miner()
+    miner.start_mining_coal()
