@@ -7,9 +7,11 @@ from utils.utils import load_mvmt_params, Coordinate
 
 PACE = load_mvmt_params()
 
+
 def round_half_up(n, decimals=3):
     multiplier = 10**decimals
     return math.floor(n * multiplier + 0.5) / multiplier
+
 
 class Character_Ctrl:
     @staticmethod
@@ -23,16 +25,17 @@ class Character_Ctrl:
         logger.debug(f"Clicking window at {(p.x, p.y)}")
         pyautogui.click(p.x, p.y)
 
+    def _calculate_mvmt(self, distance):
+        return abs(0.003326 * distance - 0.113757)
+
     def _move_horizonal(self, x, debug=False):
         if x != 0:
             if x > 0:
                 key = "d"
-                pace = PACE.get("right")
             elif x < 0:
                 key = "a"
-                pace = PACE.get("left")
             if not debug:
-                duration = round_half_up(abs(x / pace))
+                duration = self._calculate_mvmt(x)
                 self._hold_and_release(key, duration)
             else:
                 self._hold_and_release(key, duration=0.5)
@@ -41,12 +44,10 @@ class Character_Ctrl:
         if y != 0:
             if y > 0:
                 key = "s"
-                pace = PACE.get("down")
             elif y < 0:
                 key = "w"
-                pace = PACE.get("up")
             if not debug:
-                duration = round_half_up(abs(y / pace))
+                duration = self._calculate_mvmt(y)
                 self._hold_and_release(key, duration)
             else:
                 self._hold_and_release(key, duration=0.5)
