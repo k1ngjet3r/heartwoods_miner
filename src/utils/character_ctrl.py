@@ -1,6 +1,8 @@
 import math
 import time
 import pyautogui
+import subprocess
+from pathlib import Path
 from loguru import logger
 
 from utils.utils import load_mvmt_params, Coordinate
@@ -71,6 +73,13 @@ class Character_Ctrl:
     def press(self, key, presses):
         pyautogui.press(key, presses=presses)
 
+def ctrl(key, duration):
+    exe = str(Path(r'C:\Users\Jeter\dev\heartwoods_miner\src\utils\keyboard_ctrl\keyboard_control_api.exe'))
+    try:
+        subprocess.run([exe, str(key), str(duration)], check=True)
+        logger.debug(f'Holding key {key} for {duration} ms')
+    except subprocess.CalledProcessError as e:
+        logger.error(f'Error: {e}')
 
 if __name__ == "__main__":
     Ctrl = Character_Ctrl()
