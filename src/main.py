@@ -156,20 +156,27 @@ class Miner:
         2. go to bank
         """
         raise NotImplementedError()
-        CTRL.go_to_town
+        CTRL.go_to_town()
 
-    def go_to_coal_spot_from_bank():
+    def go_to_coal_spot_from_bank(self):
         raise NotImplementedError()
 
-    def go_to_coal_spot_from_teleport():
-        raise NotImplementedError()
-        CTRL.go_to_town
+    def go_to_coal_spot_from_teleport(self):
+        logger.debug('Teleport back to town and go to coal spot')
+        CTRL.go_to_town()
+        time.sleep(2)
+        CTRL.move(Coordinate(1280, 0))
+        CTRL.move(Coordinate(0, -720))
+        CTRL.move(Coordinate(640, 0))
 
+    def heal(self):
+        CTRL.press(1)
 
-if __name__ == "__main__":  # import csv
+if __name__ == "__main__":
+    # import csv
     # csv_file_name = "example.csv"
     # coal_root = str(Path("../images/coal/*.png"))
-    # miner = Miner()
+    miner = Miner()
     # rlt = {}
     # print("Start")
 
@@ -191,5 +198,6 @@ if __name__ == "__main__":  # import csv
     # CTRL.press("d")
     # p2 = miner._get_ref_coordinate()
     # print(p2.x - p1.x)
-    miner = Miner()
-    miner.start_mining_coal()
+    # miner = Miner()
+    # miner.start_mining_coal()
+    miner.heal()
