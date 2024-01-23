@@ -70,16 +70,34 @@ class Character_Ctrl:
         self._move_vertical(p.y)
         self._move_horizonal(p.x)
 
-    def press(self, key, presses):
+    def press(self, key, presses=1):
         pyautogui.press(key, presses=presses)
 
-def ctrl(key, duration):
-    exe = str(Path(r'C:\Users\Jeter\dev\heartwoods_miner\src\utils\keyboard_ctrl\keyboard_control_api.exe'))
-    try:
-        subprocess.run([exe, str(key), str(duration)], check=True)
-        logger.debug(f'Holding key {key} for {duration} ms')
-    except subprocess.CalledProcessError as e:
-        logger.error(f'Error: {e}')
+    def heal(self):
+        logger.debug('Healing the character')
+        self.press('1')
+
+    def go_to_bank(self):
+        logger.debug('Go to bank...')
+        self.go_to_town()
+        self._move_horizonal
+        raise NotImplementedError('go to bank function is not ready yet')
+
+    def go_to_coal_spot_from_town(self):
+        logger.debug('Teleport back to town and go to coal spot...')
+        self.go_to_town()
+        time.sleep(1)
+        for m in [Coordinate(1280, 0), Coordinate(0, -720), Coordinate(640, 0)]:
+            self.move(m)
+
+
+# def ctrl(key, duration):
+#     exe = str(Path(r'C:\Users\Jeter\dev\heartwoods_miner\src\utils\keyboard_ctrl\keyboard_control_api.exe'))
+#     try:
+#         subprocess.run([exe, str(key), str(duration)], check=True)
+#         logger.debug(f'Holding key {key} for {duration} ms')
+#     except subprocess.CalledProcessError as e:
+#         logger.error(f'Error: {e}')
 
 if __name__ == "__main__":
     Ctrl = Character_Ctrl()
