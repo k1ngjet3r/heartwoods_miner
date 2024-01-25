@@ -4,11 +4,13 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
 # Read data from CSV file
-df = pd.read_csv(r"C:\Users\Jeter\dev\heartwoods_miner\src\example.csv")
+df = pd.read_csv(
+    r"C:\Users\Jeter\dev\heartwoods_miner\src\utils\mvmt_analyzer\example.csv"
+)
 
 # Extract x and y data from the DataFrame
-y_data = df["time"].values
 x_data = df["distance"].values
+y_data = df["time"].values
 
 
 # Define the function to fit
@@ -32,17 +34,17 @@ def fitted_function(x):
 #     return (y - b)/a
 
 
-# # Generate the fitted curve
-# fitted_curve = fitted_function(x_data)
+# Generate the fitted curve
+fitted_curve = fitted_function(x_data)
 
-# # Plot the original data and the fitted curve
-# plt.scatter(x_data, y_data, label="Original Data")
-# plt.plot(x_data, fitted_curve, label="Fitted Curve", color="red")
-# plt.legend()
-# plt.xlabel("X-axis")
-# plt.ylabel("Y-axis")
-# plt.title("Curve Fitting Example")
-# plt.show()
+# Plot the original data and the fitted curve
+plt.scatter(x_data, y_data, label="Original Data")
+plt.plot(x_data, fitted_curve, label="Fitted Curve", color="red")
+plt.legend()
+plt.xlabel("distance")
+plt.ylabel("time")
+plt.title("Curve Fitting Example")
+plt.show()
 
 # Display the fitted parameters
 # print("Fitted Parameters:")
