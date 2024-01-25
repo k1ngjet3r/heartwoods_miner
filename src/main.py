@@ -85,10 +85,7 @@ class Miner:
                         time.sleep(8)
                     else:
                         time.sleep(6)
-                else:
-                    logger.debug("No availible coal was in the boundary")
                     self.return_to_origin()
-
             else:
                 logger.debug("No coal was found")
                 self.return_to_origin()
@@ -100,13 +97,18 @@ class Miner:
 
     def return_to_origin(self):
         if self.displacement.x == 0 and self.displacement.y == 0:
-            logger.debug("Current location is at origin, wait for coal respawn...")
-            time.sleep(5)
+            if not self._get_ref_coordinate():
+                logger.debug("Resetting the character...")
+                CTRL.go_to_coal_spot_from_town()
+            else:
+                logger.debug("Current location is at origin, wait for coal respawn...")
+                time.sleep(5)
         else:
             logger.debug(
                 "Current location is not at original, moving character back to origin"
             )
-            self._move(-self.displacement)
+            CTRL.move_reverse(-self.displacement)
+            self.displacement = Coordinate(0, 0)
 
     def calibrate_origin(self):
         if ref_found_coord := self._get_ref_coordinate():
@@ -121,7 +123,10 @@ class Miner:
         if ref_coord := self._get_ref_coordinate():
             self.ref_coord = ref_coord
         else:
-            raise NotImplementedError("origin calibration is not finish")
+            logger.debug("Cannot find the ref rock, resetting the position...")
+            CTRL.go_to_coal_spot_from_town()
+            ref_coord = self._get_ref_coordinate()
+            self.ref_coord = ref_coord
 
     def _get_ref_coordinate(self, retry=5):
         while retry > 0:
@@ -133,7 +138,7 @@ class Miner:
                 logger.debug("Cannot find the reference, retry in 2 sec")
                 time.sleep(2)
         else:
-            logger.error("Cannot find the reference, please relocate the character!")
+            logger.debug("Cannot find the reference!")
 
     def check_inventory(self):
         """open inventory and check if the inventory is full
@@ -158,25 +163,13 @@ class Miner:
         raise NotImplementedError()
         CTRL.go_to_town()
 
-    def go_to_coal_spot_from_bank(self):
-        raise NotImplementedError()
-
-    def go_to_coal_spot_from_teleport(self):
-        logger.debug('Teleport back to town and go to coal spot')
-        CTRL.go_to_town()
-        time.sleep(2)
-        CTRL.move(Coordinate(1280, 0))
-        CTRL.move(Coordinate(0, -720))
-        CTRL.move(Coordinate(640, 0))
-
-    def heal(self):
-        CTRL.press(1)
 
 if __name__ == "__main__":
-    # import csv
-    # csv_file_name = "example.csv"
+    import csv
+    csv_file_name = "example.csv"
     # coal_root = str(Path("../images/coal/*.png"))
     miner = Miner()
+    # CTRL._hold_and_release("w", 1)
     # rlt = {}
     # print("Start")
 
@@ -184,12 +177,12 @@ if __name__ == "__main__":
     #     writer = csv.writer(file)
     #     for i in range(200):
     #         duration = (i + 1) * 0.005
-    #         p1 = miner._get_ref_coordinate()
-    #         CTRL._hold_and_release("d", duration)
-    #         p2 = miner._get_ref_coordinate()
-    #         CTRL._hold_and_release("a", duration)
+    #         p1 = miner._get_ref_coordinate()[0]
+    #         CTRL._hold_and_release("w", duration)
+    #         p2 = miner._get_ref_coordinate()[0]
+    #         CTRL._hold_and_release("s", duration)
 
-    #         writer.writerow([str(duration), p2.x-p1.x])
+    #         writer.writerow([str(duration), p2.y-p1.y])
 
     # p1 = miner._get_ref_coordinate()
     # CTRL._hold_and_release("d", 0.001)
@@ -199,5 +192,18 @@ if __name__ == "__main__":
     # p2 = miner._get_ref_coordinate()
     # print(p2.x - p1.x)
     # miner = Miner()
-    # miner.start_mining_coal()
-    miner.heal()
+    miner.start_mining_coal()
+    # miner.heal()
+
+    # displacement = Coordinate(100, 0)
+    # with open(csv_file_name, mode="w", newline="") as file:
+    #     writer = csv.writer(file)
+    #     for i in range(30):
+    #         p1 = miner._get_ref_coordinate()[0]
+    #         CTRL.move(displacement)
+
+    #         CTRL.move_reverse(-displacement)
+    #         p2 = miner._get_ref_coordinate()[0]
+    #         print(f"p1: {p1}, p2: {p2}")
+
+    #         writer.writerow([str(i), str(p1.x - p2.x)])
